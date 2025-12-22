@@ -18,11 +18,10 @@ import (
 
 var defaultsHAProxyParams = utils.HAProxyParams{
 	Globals: map[string][]string{
-		"stats":                     {"timeout 2m"},
-		"tune.ssl.default-dh-param": {"1024"},
-		"nbthread":                  {fmt.Sprint(runtime.GOMAXPROCS(0))},
-		"ulimit-n":                  {"65536"},
-		"maxconn":                   {"32000"},
+		"stats":    {"timeout 2m"},
+		"nbthread": {fmt.Sprint(runtime.GOMAXPROCS(0))},
+		"ulimit-n": {"65536"},
+		"maxconn":  {"32000"},
 	},
 	Defaults: map[string][]string{
 		"http-reuse": {"always"},
@@ -31,7 +30,6 @@ var defaultsHAProxyParams = utils.HAProxyParams{
 
 const baseCfgTmpl = `
 global
-	master-worker
 	stats socket {{.SocketPath}} mode 600 level admin expose-fd listeners
 	{{- range $k, $vs := .HAProxyParams.Globals}}
 	{{- range $v := $vs}}

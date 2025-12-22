@@ -20,15 +20,15 @@ func TestParseEnvoyBootstrap(t *testing.T) {
   },
   "dynamic_resources": {
     "ads_config": {
-      "grpc_services": [{
-        "envoy_grpc": {
-          "cluster_name": "local_agent"
-        },
+      "grpc_services": {
         "initial_metadata": [{
           "key": "x-consul-token",
           "value": "test-token-12345"
-        }]
-      }]
+        }],
+        "envoy_grpc": {
+          "cluster_name": "local_agent"
+        }
+      }
     }
   }
 }`

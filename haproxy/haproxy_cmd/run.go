@@ -38,6 +38,7 @@ type Config struct {
 func Start(sd *lib.Shutdown, cfg Config) (*dataplane.Dataplane, error) {
 	haCmd, err := runCommand(sd, halog.New,
 		cfg.HAProxyPath,
+		"-W",
 		"-f",
 		cfg.HAProxyConfigPath,
 	)

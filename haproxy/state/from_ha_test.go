@@ -23,10 +23,8 @@ func testCfg(t *testing.T, cfgDir string, state State) {
 
 	cfg := `
 	global
-		master-worker
 		stats socket ` + haSock + ` mode 600 level admin expose-fd listeners
 		stats timeout 2m
-		tune.ssl.default-dh-param 1024
 		nbproc 1
 		nbthread 1
 

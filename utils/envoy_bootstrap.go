@@ -40,50 +40,56 @@ func ParseEnvoyBootstrap(path string) (*EnvoyBootstrapConfig, error) {
 	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse envoy bootstrap JSON: %w", err)
 	}
-	log.Infof("Envoy data loaded: %s", string(data))
 
 	// Extract the Consul token from the flexible JSON structure
 	config.consulToken = extractTokenFromJSON(config.DynamicResources)
 
+	if config.consulToken != "" {
+		log.Debug("Extracted Consul token from Envoy bootstrap")
+	}
+
 	return &config, nil
 }
 
-// extractTokenFromJSON searches for x-consul-token in the raw JSON
+// extractTokenFromJSON searches for x-consul-token in the dynamic_resources JSON
+// Expected structure: dynamic_resources.ads_config.grpc_services.initial_metadata[].{key,value}
 func extractTokenFromJSON(rawJSON json.RawMessage) string {
-	// Parse as a map to search flexibly
 	var data map[string]interface{}
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
 		return ""
 	}
 
-	// Recursively search for x-consul-token
-	return findTokenRecursive(data)
-}
+	// Navigate to ads_config.grpc_services.initial_metadata
+	adsConfig, ok := data["ads_config"].(map[string]interface{})
+	if !ok {
+		return ""
+	}
 
-// findTokenRecursive recursively searches for x-consul-token in nested structures
-func findTokenRecursive(data interface{}) string {
-	switch v := data.(type) {
-	case map[string]interface{}:
-		// Check if this map has the key and value we're looking for
-		if key, keyOk := v["key"].(string); keyOk && key == "x-consul-token" {
-			if value, valueOk := v["value"].(string); valueOk {
-				return value
-			}
+	grpcServices, ok := adsConfig["grpc_services"].(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	initialMetadata, ok := grpcServices["initial_metadata"].([]interface{})
+	if !ok {
+		return ""
+	}
+
+	// Look for x-consul-token in the metadata array
+	for _, item := range initialMetadata {
+		metadata, ok := item.(map[string]interface{})
+		if !ok {
+			continue
 		}
-		// Recursively search nested maps
-		for _, val := range v {
-			if result := findTokenRecursive(val); result != "" {
-				return result
-			}
-		}
-	case []interface{}:
-		// Recursively search arrays
-		for _, item := range v {
-			if result := findTokenRecursive(item); result != "" {
-				return result
-			}
+
+		key, keyOk := metadata["key"].(string)
+		value, valueOk := metadata["value"].(string)
+
+		if keyOk && valueOk && key == "x-consul-token" {
+			return value
 		}
 	}
+
 	return ""
 }
 
