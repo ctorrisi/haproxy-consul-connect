@@ -22,30 +22,24 @@ func haproxyLog(l string) {
 		return
 	}
 
-	f := log.Errorf
-	defer func() {
-		f("%s: %s", "haproxy", strings.TrimSpace(l))
-	}()
+	l = strings.TrimSpace(l)
+	f := log.Infof
 
-	if l[0] != '[' {
-		return
+	// Parse log level if present
+	if l[0] == '[' {
+		end := strings.IndexByte(l, ']')
+		if end != -1 {
+			switch l[1:end] {
+			case "NOTICE":
+				f = log.Infof
+			case "WARNING":
+				f = log.Warnf
+			case "ALERT", "ERROR":
+				f = log.Errorf
+			}
+			l = l[end+1:]
+		}
 	}
 
-	end := strings.IndexByte(l, ']')
-	if end == -1 {
-		return
-	}
-
-	switch l[1:end] {
-	case "NOTICE":
-		f = log.Infof
-	case "WARNING":
-		f = log.Warnf
-	case "ALERT":
-		f = log.Errorf
-	default:
-		return
-	}
-
-	l = l[end+1:]
+	f("haproxy: %s", strings.TrimSpace(l))
 }

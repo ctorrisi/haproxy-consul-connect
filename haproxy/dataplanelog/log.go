@@ -28,12 +28,19 @@ func logLine(line []byte) {
 	f := log.Fields{}
 	err := json.Unmarshal(line, &f)
 	if err != nil {
-		log.Errorf("dataplane: failed to parse log line: %s", string(line))
+		// If we can't parse as JSON, just pass through the raw message
+		log.Infof("dataplane: %s", string(line))
 		return
 	}
 
-	msg := f["msg"].(string)
-	level := f["level"].(string)
+	msg, msgOk := f["msg"].(string)
+	level, levelOk := f["level"].(string)
+
+	// If the JSON doesn't have the expected fields, pass through raw
+	if !msgOk || !levelOk {
+		log.Infof("dataplane: %s", string(line))
+		return
+	}
 
 	delete(f, "msg")
 	delete(f, "level")
