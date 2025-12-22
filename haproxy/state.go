@@ -83,10 +83,15 @@ func (h *HAProxy) watch(sd *lib.Shutdown) error {
 			//   - all filters are retrieved at once, hence index are updated accordingly to the position
 			//   - but filter are created one at a time, api doesn't allow to create all at once, hence index must be set to 0
 			for index, currentStateFrontend := range currentState.Frontends {
-				if currentStateFrontend.FilterSpoe != nil {
+				// Check if fromHa has the same number of frontends to avoid index out of range
+				if index >= len(fromHa.Frontends) {
+					log.Warnf("frontend index %d out of range in fromHa (len=%d), skipping filter index sync", index, len(fromHa.Frontends))
+					break
+				}
+				if currentStateFrontend.FilterSpoe != nil && fromHa.Frontends[index].FilterSpoe != nil {
 					fromHa.Frontends[index].FilterSpoe.Filter.Index = currentStateFrontend.FilterSpoe.Filter.Index
 				}
-				if currentStateFrontend.FilterCompression != nil {
+				if currentStateFrontend.FilterCompression != nil && fromHa.Frontends[index].FilterCompression != nil {
 					fromHa.Frontends[index].FilterCompression.Filter.Index = currentStateFrontend.FilterCompression.Filter.Index
 				}
 			}
