@@ -77,6 +77,7 @@ func main() {
 	statsServiceRegister := flag.Bool("stats-service-register", false, "Register a consul service for connect stats")
 	enableIntentions := flag.Bool("enable-intentions", false, "Enable Connect intentions")
 	token := flag.String("token", "", "Consul ACL token")
+	envoyBootstrapPath := flag.String("envoy-bootstrap", "", "Path to Envoy bootstrap file (optional, for extracting Consul token)")
 	flag.Parse()
 	if versionFlag != nil && *versionFlag {
 		fmt.Printf("Version: %s ; BuildTime: %s ; GitHash: %s\n", Version, BuildTime, GitHash)
@@ -95,8 +96,30 @@ func main() {
 
 	sd := lib.NewShutdown()
 
+	// Try to parse Envoy bootstrap file if provided
+	var bootstrapConfig *utils.EnvoyBootstrapConfig
+	if *envoyBootstrapPath != "" {
+		bootstrapConfig, err = utils.ParseEnvoyBootstrap(*envoyBootstrapPath)
+		if err != nil {
+			log.Warnf("Failed to parse envoy bootstrap file: %s", err)
+		} else if bootstrapConfig != nil {
+			log.Info("Successfully parsed Envoy bootstrap configuration")
+		}
+	}
+
 	consulConfig := &api.Config{
 		Address: *consulAddr,
+	}
+
+	// Token priority (lowest to highest):
+	// 1. Envoy bootstrap file
+	// 2. Environment variable
+	// 3. Command line flag
+	if bootstrapConfig != nil {
+		if bootstrapToken := bootstrapConfig.ExtractConsulToken(); bootstrapToken != "" {
+			consulConfig.Token = bootstrapToken
+			log.Info("Setting token from Envoy bootstrap file")
+		}
 	}
 	env_token, env_token_exists := os.LookupEnv("CONNECT_CONSUL_TOKEN")
 	if env_token_exists {
@@ -134,8 +157,16 @@ func main() {
 		}
 	} else if *service != "" {
 		serviceID = *service
+	} else if bootstrapConfig != nil {
+		// Try to extract service name from Envoy bootstrap
+		if extractedService := bootstrapConfig.ExtractServiceName(); extractedService != "" {
+			serviceID = extractedService
+			log.Infof("Using service name from Envoy bootstrap: %s", serviceID)
+		} else {
+			log.Fatalf("Please specify -sidecar-for, -sidecar-for-tag, or provide -envoy-bootstrap with valid service information")
+		}
 	} else {
-		log.Fatalf("Please specify -sidecar-for or -sidecar-for-tag")
+		log.Fatalf("Please specify -sidecar-for, -sidecar-for-tag, or provide -envoy-bootstrap with valid service information")
 	}
 
 	haproxyParams, err := utils.MakeHAProxyParams(haproxyParamsFlag)
