@@ -89,10 +89,35 @@ func New(service string, consul *api.Client, log Logger) *Watcher {
 }
 
 func (w *Watcher) Run() error {
-	proxyID, err := proxy.LookupProxyIDForSidecar(w.consul, w.service)
-	if err != nil {
-		return err
+	// Retry lookup to handle race conditions (e.g., in Nomad where service starts before sidecar is registered)
+	var proxySvc *api.AgentService
+	var err error
+	maxRetries := 10
+	retryDelay := 1 * time.Second
+
+	for i := 0; i < maxRetries; i++ {
+		proxySvc, err = proxy.LookupServiceForSidecar(w.consul, w.service)
+		if err == nil {
+			break
+		}
+
+		if i < maxRetries-1 {
+			w.log.Infof("consul: sidecar proxy not found for %s (attempt %d/%d), retrying in %s: %s", w.service, i+1, maxRetries, retryDelay, err)
+			time.Sleep(retryDelay)
+			// Exponential backoff with cap at 30 seconds
+			retryDelay = retryDelay * 2
+			if retryDelay > 30*time.Second {
+				retryDelay = 30 * time.Second
+			}
+		}
 	}
+
+	if err != nil {
+		return fmt.Errorf("failed to lookup sidecar proxy after %d attempts: %w", maxRetries, err)
+	}
+
+	proxyID := proxySvc.ID
+	w.log.Infof("consul: found sidecar proxy %s for service %s", proxyID, w.service)
 
 	svc, _, err := w.consul.Agent().Service(w.service, &api.QueryOptions{})
 	if err != nil {
