@@ -52,6 +52,7 @@ func Start(sd *lib.Shutdown, cfg Config) (*dataplane.Dataplane, error) {
 		"--haproxy-bin", cfg.HAProxyPath,
 		"--config-file", cfg.HAProxyConfigPath,
 		"--reload-cmd", fmt.Sprintf("kill -SIGUSR2 %d", haCmd.Process.Pid),
+		"--restart-cmd", fmt.Sprintf("kill -SIGUSR2 %d", haCmd.Process.Pid),
 		"--reload-delay", "1",
 		"--userlist", "controller",
 		"--transaction-dir", cfg.DataplaneTransactionDir,
