@@ -15,19 +15,10 @@ type EnvoyBootstrapConfig struct {
 		ID      string `json:"id"`
 		Cluster string `json:"cluster"`
 	} `json:"node"`
-	DynamicResources struct {
-		AdsConfig struct {
-			GrpcServices []struct {
-				EnvoyGrpc struct {
-					ClusterName string `json:"cluster_name"`
-				} `json:"envoy_grpc"`
-				InitialMetadata []struct {
-					Key   string `json:"key"`
-					Value string `json:"value"`
-				} `json:"initial_metadata"`
-			} `json:"grpc_services"`
-		} `json:"ads_config"`
-	} `json:"dynamic_resources"`
+	// Use RawMessage to handle flexible JSON structure
+	DynamicResources json.RawMessage `json:"dynamic_resources"`
+	// Store extracted values
+	consulToken string
 }
 
 // ParseEnvoyBootstrap reads and parses an Envoy bootstrap file
@@ -50,7 +41,49 @@ func ParseEnvoyBootstrap(path string) (*EnvoyBootstrapConfig, error) {
 		return nil, fmt.Errorf("failed to parse envoy bootstrap JSON: %w", err)
 	}
 
+	// Extract the Consul token from the flexible JSON structure
+	config.consulToken = extractTokenFromJSON(config.DynamicResources)
+
 	return &config, nil
+}
+
+// extractTokenFromJSON searches for x-consul-token in the raw JSON
+func extractTokenFromJSON(rawJSON json.RawMessage) string {
+	// Parse as a map to search flexibly
+	var data map[string]interface{}
+	if err := json.Unmarshal(rawJSON, &data); err != nil {
+		return ""
+	}
+
+	// Recursively search for x-consul-token
+	return findTokenRecursive(data)
+}
+
+// findTokenRecursive recursively searches for x-consul-token in nested structures
+func findTokenRecursive(data interface{}) string {
+	switch v := data.(type) {
+	case map[string]interface{}:
+		// Check if this map has the key and value we're looking for
+		if key, keyOk := v["key"].(string); keyOk && key == "x-consul-token" {
+			if value, valueOk := v["value"].(string); valueOk {
+				return value
+			}
+		}
+		// Recursively search nested maps
+		for _, val := range v {
+			if result := findTokenRecursive(val); result != "" {
+				return result
+			}
+		}
+	case []interface{}:
+		// Recursively search arrays
+		for _, item := range v {
+			if result := findTokenRecursive(item); result != "" {
+				return result
+			}
+		}
+	}
+	return ""
 }
 
 // ExtractConsulToken extracts the Consul token from the bootstrap config
@@ -58,16 +91,7 @@ func (c *EnvoyBootstrapConfig) ExtractConsulToken() string {
 	if c == nil {
 		return ""
 	}
-
-	for _, grpcService := range c.DynamicResources.AdsConfig.GrpcServices {
-		for _, metadata := range grpcService.InitialMetadata {
-			if metadata.Key == "x-consul-token" {
-				return metadata.Value
-			}
-		}
-	}
-
-	return ""
+	return c.consulToken
 }
 
 // ExtractServiceName extracts the service name from the proxy ID

@@ -155,24 +155,43 @@ func (w *Watcher) Run() error {
 
 	w.log.Infof("consul: found sidecar proxy %s for service %s", proxyID, w.service)
 
+	// Try to get the application service, but if it doesn't exist (common in Nomad),
+	// fall back to using the service name we were given
 	svc, _, err := w.consul.Agent().Service(w.service, &api.QueryOptions{})
 	if err != nil {
-		return err
+		w.log.Warnf("consul: application service %s not found in Consul (this is normal in Nomad), using service name as-is: %v", w.service, err)
+		w.serviceName = w.service
+	} else {
+		w.serviceName = svc.Service
 	}
 
-	w.serviceName = svc.Service
+	// Get the sidecar proxy service details to extract the target port
+	proxySvc, _, err := w.consul.Agent().Service(proxyID, &api.QueryOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get sidecar proxy details: %w", err)
+	}
 
-	w.ready.Add(4)
+	// In Nomad, the application service may not be registered separately.
+	// Get the target port from the proxy's LocalServicePort configuration.
+	if proxySvc.Proxy != nil && proxySvc.Proxy.LocalServicePort > 0 {
+		w.downstream.TargetPort = proxySvc.Proxy.LocalServicePort
+		w.log.Infof("consul: using target port %d from sidecar proxy configuration", w.downstream.TargetPort)
+	} else {
+		// Fallback: try to get it from the application service if it exists
+		appSvc, _, err := w.consul.Agent().Service(w.service, &api.QueryOptions{})
+		if err == nil {
+			w.downstream.TargetPort = appSvc.Port
+			w.log.Infof("consul: using target port %d from application service", w.downstream.TargetPort)
+		} else {
+			w.log.Warnf("consul: could not determine target port from proxy or application service")
+		}
+	}
+
+	w.ready.Add(3) // Changed from 4 to 3 since we're not watching the app service anymore
 
 	go w.watchCA()
 	go w.watchLeaf()
 	go w.watchService(proxyID, w.handleProxyChange)
-	go w.watchService(w.service, func(first bool, srv *api.AgentService) {
-		w.downstream.TargetPort = srv.Port
-		if first {
-			w.ready.Done()
-		}
-	})
 
 	w.ready.Wait()
 
