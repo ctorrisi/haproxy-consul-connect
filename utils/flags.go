@@ -44,7 +44,7 @@ func MakeHAProxyParams(flags StringSliceFlag) (HAProxyParams, error) {
 		}
 
 		_, ok := t[parts[0][dot+1:]]
-		if !ok  {
+		if !ok {
 			t[parts[0][dot+1:]] = []string{}
 		}
 		t[parts[0][dot+1:]] = append(t[parts[0][dot+1:]], parts[1])

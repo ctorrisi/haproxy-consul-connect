@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/consul/api"
-	"github.com/hashicorp/consul/command/connect/proxy"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -88,15 +87,54 @@ func New(service string, consul *api.Client, log Logger) *Watcher {
 	}
 }
 
+// findSidecarProxy queries Consul's agent API to find the sidecar proxy service
+// for the given service. This mimics Envoy's approach of directly checking Consul's
+// service catalog rather than using internal Nomad APIs.
+func (w *Watcher) findSidecarProxy() (string, error) {
+	// Query all services registered with this Consul agent
+	services, err := w.consul.Agent().Services()
+	if err != nil {
+		return "", fmt.Errorf("failed to query Consul services: %w", err)
+	}
+
+	// Look for a sidecar proxy service for our service
+	// The sidecar will have a name like "backend-service-sidecar-proxy"
+	// and its metadata or tags should indicate it's a proxy for our service
+	expectedProxyName := w.service + "-sidecar-proxy"
+
+	for serviceID, service := range services {
+		// Check if this is a sidecar proxy service
+		if service.Kind == api.ServiceKindConnectProxy {
+			// Check if the proxy field indicates this is for our service
+			if service.Proxy != nil && service.Proxy.DestinationServiceName == w.service {
+				w.log.Debugf("consul: found sidecar proxy %s (ID: %s) for service %s",
+					service.Service, serviceID, w.service)
+				return serviceID, nil
+			}
+		}
+
+		// Also check by name pattern for compatibility
+		if service.Service == expectedProxyName || serviceID == expectedProxyName {
+			w.log.Debugf("consul: found sidecar proxy by name %s for service %s",
+				serviceID, w.service)
+			return serviceID, nil
+		}
+	}
+
+	return "", fmt.Errorf("no sidecar proxy registered for %s", w.service)
+}
+
 func (w *Watcher) Run() error {
 	// Retry lookup to handle race conditions (e.g., in Nomad where service starts before sidecar is registered)
-	var proxySvc *api.AgentService
+	// Instead of using proxy.LookupServiceForSidecar (which is for Nomad internals),
+	// we directly query Consul's agent API to find the registered sidecar proxy service
+	var proxyID string
 	var err error
-	maxRetries := 10
+	maxRetries := 60 // Increased to match Envoy's 60 second timeout
 	retryDelay := 1 * time.Second
 
 	for i := 0; i < maxRetries; i++ {
-		proxySvc, err = proxy.LookupServiceForSidecar(w.consul, w.service)
+		proxyID, err = w.findSidecarProxy()
 		if err == nil {
 			break
 		}
@@ -104,19 +142,17 @@ func (w *Watcher) Run() error {
 		if i < maxRetries-1 {
 			w.log.Infof("consul: sidecar proxy not found for %s (attempt %d/%d), retrying in %s: %s", w.service, i+1, maxRetries, retryDelay, err)
 			time.Sleep(retryDelay)
-			// Exponential backoff with cap at 30 seconds
-			retryDelay = retryDelay * 2
-			if retryDelay > 30*time.Second {
-				retryDelay = 30 * time.Second
+			// Exponential backoff with cap at 5 seconds
+			if retryDelay < 5*time.Second {
+				retryDelay = retryDelay * 2
 			}
 		}
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to lookup sidecar proxy after %d attempts: %w", maxRetries, err)
+		return fmt.Errorf("failed to find sidecar proxy in Consul after %d attempts: %w", maxRetries, err)
 	}
 
-	proxyID := proxySvc.ID
 	w.log.Infof("consul: found sidecar proxy %s for service %s", proxyID, w.service)
 
 	svc, _, err := w.consul.Agent().Service(w.service, &api.QueryOptions{})

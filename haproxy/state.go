@@ -84,10 +84,10 @@ func (h *HAProxy) watch(sd *lib.Shutdown) error {
 			//   - but filter are created one at a time, api doesn't allow to create all at once, hence index must be set to 0
 			for index, currentStateFrontend := range currentState.Frontends {
 				if currentStateFrontend.FilterSpoe != nil {
-					fromHa.Frontends[index].FilterSpoe.Filter.Index  = currentStateFrontend.FilterSpoe.Filter.Index
+					fromHa.Frontends[index].FilterSpoe.Filter.Index = currentStateFrontend.FilterSpoe.Filter.Index
 				}
 				if currentStateFrontend.FilterCompression != nil {
-					fromHa.Frontends[index].FilterCompression.Filter.Index  = currentStateFrontend.FilterCompression.Filter.Index
+					fromHa.Frontends[index].FilterCompression.Filter.Index = currentStateFrontend.FilterCompression.Filter.Index
 				}
 			}
 			diff, equal := messagediff.PrettyDiff(currentState, fromHa)

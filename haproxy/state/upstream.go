@@ -15,7 +15,7 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 
 	fePort64 := int64(cfg.LocalBindPort)
 
-	if cfg.Protocol != "" && cfg.Protocol == "tcp" {
+	if cfg.Protocol == "tcp" {
 		feMode = models.FrontendModeTCP
 		beMode = models.BackendModeTCP
 	}
@@ -35,8 +35,8 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 		},
 		FilterCompression: &FrontendFilter{
 			Filter: models.Filter{
-				Index:      int64p(0),
-				Type:       models.FilterTypeCompression,
+				Index: int64p(0),
+				Type:  models.FilterTypeCompression,
 			},
 		},
 	}

@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	"github.com/haproxytech/haproxy-consul-connect/utils"
-	"text/template"
 	"github.com/stretchr/testify/require"
+	"text/template"
 )
 
 func TestHaproxyConfig(t *testing.T) {
-//	flags := stringSliceFlag{
+	//	flags := stringSliceFlag{
 	flags := []string{
 		"defaults.test.with.dots=3",
 		"defaults.another=abdc",
@@ -26,12 +26,12 @@ func TestHaproxyConfig(t *testing.T) {
 
 	tmpl, err := template.New("test").Parse(baseCfgTmpl)
 	var capture_stdout bytes.Buffer
-    err = tmpl.Execute(&capture_stdout, baseParams{
-        SocketPath:    "stats_sock.sock",
-        DataplaneUser: "dummy_user",
-        DataplanePass: "dummy_pass",
-        HAProxyParams: defaultsHAProxyParams.With(params),
-    })
+	err = tmpl.Execute(&capture_stdout, baseParams{
+		SocketPath:    "stats_sock.sock",
+		DataplaneUser: "dummy_user",
+		DataplanePass: "dummy_pass",
+		HAProxyParams: defaultsHAProxyParams.With(params),
+	})
 	require.NoError(t, err)
 	expected_conf := `
 global

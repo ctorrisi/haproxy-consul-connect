@@ -18,7 +18,7 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 		return state, err
 	}
 
-	if cfg.Protocol != "" && cfg.Protocol == "tcp" {
+	if cfg.Protocol == "tcp" {
 		feMode = models.FrontendModeTCP
 		beMode = models.BackendModeTCP
 	}
@@ -43,8 +43,8 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 		},
 		FilterCompression: &FrontendFilter{
 			Filter: models.Filter{
-				Index:      int64p(0),
-				Type:       models.FilterTypeCompression,
+				Index: int64p(0),
+				Type:  models.FilterTypeCompression,
 			},
 		},
 	}

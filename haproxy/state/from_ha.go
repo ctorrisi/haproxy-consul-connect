@@ -55,7 +55,8 @@ func FromHAProxy(ha HAProxyRead) (State, error) {
 		var filterCompression *FrontendFilter
 		for _, filter := range filters {
 			switch filter.Type {
-				case models.FilterTypeSpoe: {
+			case models.FilterTypeSpoe:
+				{
 					if filterSpoe != nil {
 						return state, fmt.Errorf("spoe filter already initialized for frontend %s", f.Name)
 					}
@@ -71,7 +72,8 @@ func FromHAProxy(ha HAProxyRead) (State, error) {
 					}
 					filterSpoe.Rule = rules[0]
 				}
-				case models.FilterTypeCompression: {
+			case models.FilterTypeCompression:
+				{
 					if filterCompression != nil {
 						return state, fmt.Errorf("compression filter already initialized for frontend %s", f.Name)
 					}
@@ -79,8 +81,8 @@ func FromHAProxy(ha HAProxyRead) (State, error) {
 						Filter: filter,
 					}
 				}
-				default:
-					fmt.Errorf("unknown filter type for frontend %s, got %s", f.Name, filter.Type)
+			default:
+				fmt.Errorf("unknown filter type for frontend %s, got %s", f.Name, filter.Type)
 			}
 		}
 
