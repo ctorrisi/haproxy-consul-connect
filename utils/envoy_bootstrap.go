@@ -40,6 +40,7 @@ func ParseEnvoyBootstrap(path string) (*EnvoyBootstrapConfig, error) {
 	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse envoy bootstrap JSON: %w", err)
 	}
+	log.Infof("Envoy data loaded: %s", string(data))
 
 	// Extract the Consul token from the flexible JSON structure
 	config.consulToken = extractTokenFromJSON(config.DynamicResources)
