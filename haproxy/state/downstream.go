@@ -102,9 +102,10 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 		},
 		Servers: []models.Server{
 			{
-				Name:    "downstream_node",
-				Address: cfg.TargetAddress,
-				Port:    int64p(cfg.TargetPort),
+				Name:        "downstream_node",
+				Address:     cfg.TargetAddress,
+				Port:        int64p(cfg.TargetPort),
+				Maintenance: models.ServerMaintenanceDisabled,
 			},
 		},
 	}
