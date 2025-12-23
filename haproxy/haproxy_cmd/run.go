@@ -33,6 +33,7 @@ type Config struct {
 	DataplaneUser           string
 	DataplanePass           string
 	DataplaneLogLevel       string
+	MasterRuntime           string
 }
 
 func Start(sd *lib.Shutdown, cfg Config) (*dataplane.Dataplane, error) {
@@ -57,6 +58,8 @@ func Start(sd *lib.Shutdown, cfg Config) (*dataplane.Dataplane, error) {
 		"--reload-delay", "1",
 		"--userlist", "controller",
 		"--transaction-dir", cfg.DataplaneTransactionDir,
+		"--master-runtime", cfg.MasterRuntime,
+		"--master-worker-mode",
 		"--log-format", "JSON",
 		"--log-level", cfg.DataplaneLogLevel,
 	)
