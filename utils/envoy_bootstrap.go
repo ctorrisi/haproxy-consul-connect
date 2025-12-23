@@ -36,6 +36,8 @@ func ParseEnvoyBootstrap(path string) (*EnvoyBootstrapConfig, error) {
 		return nil, fmt.Errorf("failed to read envoy bootstrap file: %w", err)
 	}
 
+	log.Infof("Envoy bootstrap data %s", string(data))
+
 	var config EnvoyBootstrapConfig
 	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse envoy bootstrap JSON: %w", err)
