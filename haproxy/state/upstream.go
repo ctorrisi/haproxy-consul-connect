@@ -21,6 +21,8 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 		beMode = models.BackendModeTCP
 	}
 
+	log.Infof("upstream %s: configuring frontend to listen on %s:%d", cfg.Name, cfg.LocalBindAddress, cfg.LocalBindPort)
+
 	fe := Frontend{
 		Frontend: models.Frontend{
 			Name:           feName,
