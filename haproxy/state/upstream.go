@@ -5,6 +5,7 @@ import (
 
 	"github.com/haproxytech/haproxy-consul-connect/consul"
 	"github.com/haproxytech/models/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstream, oldState, newState State) (State, error) {
@@ -161,6 +162,7 @@ func generateUpstreamServers(opts Options, certStore CertificateStore, cfg consu
 		i = emptyServerSlots[0]
 		emptyServerSlots = emptyServerSlots[1:]
 
+		log.Infof("upstream %s: configuring server %s:%d (weight: %d)", beName, s.Host, s.Port, s.Weight)
 		servers[i].Address = s.Host
 		servers[i].Port = int64p(s.Port)
 		servers[i].Weight = int64p(s.Weight)

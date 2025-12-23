@@ -5,6 +5,7 @@ import (
 
 	"github.com/haproxytech/haproxy-consul-connect/consul"
 	"github.com/haproxytech/models/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Downstream, state State) (State, error) {
@@ -22,6 +23,9 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 		feMode = models.FrontendModeTCP
 		beMode = models.BackendModeTCP
 	}
+
+	log.Infof("downstream: configuring frontend to listen on %s:%d, backend target %s:%d",
+		cfg.LocalBindAddress, cfg.LocalBindPort, cfg.TargetAddress, cfg.TargetPort)
 
 	// Main config
 	fe := Frontend{
