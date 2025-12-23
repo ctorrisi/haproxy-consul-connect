@@ -62,9 +62,12 @@ func Generate(opts Options, certStore CertificateStore, oldState State, cfg cons
 		})
 	}
 
-	newState, err = generateDownstream(opts, certStore, cfg.Downstream, newState)
-	if err != nil {
-		return newState, err
+	// Only generate downstream if there's a local service port (skip for client-only services)
+	if cfg.Downstream.TargetPort > 0 {
+		newState, err = generateDownstream(opts, certStore, cfg.Downstream, newState)
+		if err != nil {
+			return newState, err
+		}
 	}
 
 	for _, up := range cfg.Upstreams {
