@@ -24,6 +24,7 @@ func GetTestConsulConfig() consul.Config {
 		Upstreams: []consul.Upstream{
 			consul.Upstream{
 				Name:             "service_1",
+				ServiceName:      "1",
 				LocalBindAddress: "127.0.0.1",
 				LocalBindPort:    10000,
 				ConnectTimeout:   consul.DefaultConnectTimeout,

@@ -26,6 +26,7 @@ type upstream struct {
 	LocalBindAddress string
 	LocalBindPort    int
 	Name             string
+	ServiceName      string
 	Datacenter       string
 	Protocol         string
 	Nodes            []*api.ServiceEntry
@@ -323,7 +324,8 @@ func (w *Watcher) startUpstreamService(startup bool, up api.Upstream, name strin
 	}
 
 	u := &upstream{
-		Name: name,
+		Name:        name,
+		ServiceName: up.DestinationName,
 	}
 
 	w.updateUpstream(up, u)
@@ -377,7 +379,8 @@ func (w *Watcher) startUpstreamPreparedQuery(startup bool, up api.Upstream, name
 	}
 
 	u := &upstream{
-		Name: name,
+		Name:        name,
+		ServiceName: up.DestinationName,
 	}
 
 	w.updateUpstream(up, u)
@@ -602,6 +605,7 @@ func (w *Watcher) genCfg() Config {
 	for _, up := range w.upstreams {
 		upstream := Upstream{
 			Name:             up.Name,
+			ServiceName:      up.ServiceName,
 			LocalBindAddress: up.LocalBindAddress,
 			LocalBindPort:    up.LocalBindPort,
 			Protocol:         up.Protocol,

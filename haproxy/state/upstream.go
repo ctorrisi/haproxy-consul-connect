@@ -120,7 +120,7 @@ func generateUpstreamServers(opts Options, certStore CertificateStore, cfg consu
 		SslCertificate: crtPath,
 		SslCafile:      caPath,
 		Verify:         models.BindVerifyRequired,
-		Sni:            fmt.Sprintf("str(%s)", cfg.Name),
+		Sni:            fmt.Sprintf("str(\"%s\")", cfg.ServiceName),
 		Maintenance:    models.ServerMaintenanceEnabled,
 	}
 
