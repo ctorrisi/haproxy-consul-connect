@@ -84,6 +84,7 @@ type haConfig struct {
 	SPOE                    string
 	SPOESock                string
 	StatsSock               string
+	MasterSocketPath        string
 	DataplaneSock           string
 	DataplaneTransactionDir string
 	DataplaneUser           string
@@ -113,9 +114,17 @@ func newHaConfig(baseDir string, params utils.HAProxyParams, sd *lib.Shutdown) (
 	cfg.SPOE = path.Join(base, "spoe.conf")
 	cfg.SPOESock = path.Join(base, "spoe.sock")
 	cfg.StatsSock = path.Join(base, "haproxy.sock")
+	cfg.MasterSocketPath = path.Join(base, "haproxy-master.sock")
 	cfg.DataplaneSock = path.Join(base, "dataplane.sock")
 	cfg.DataplaneTransactionDir = path.Join(base, "dataplane-transactions")
 	cfg.LogsSock = path.Join(base, "logs.sock")
+
+	// Create the transaction directory for dataplane API
+	err = os.MkdirAll(cfg.DataplaneTransactionDir, 0755)
+	if err != nil {
+		sd.Done()
+		return nil, fmt.Errorf("failed to create transaction directory: %s", err)
+	}
 
 	tmpl, err := template.New("cfg").Parse(baseCfgTmpl)
 	if err != nil {
