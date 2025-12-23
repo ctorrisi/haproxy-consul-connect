@@ -219,6 +219,11 @@ func (w *Watcher) handleProxyChange(first bool, srv *api.AgentService) {
 		if a, ok := srv.Proxy.Config["local_service_address"].(string); ok {
 			w.downstream.TargetAddress = a
 		}
+		if p, ok := srv.Proxy.Config["local_service_port"].(float64); ok {
+			// Override the target port from proxy config (useful in Nomad bridge mode with port mapping)
+			w.downstream.TargetPort = int(p)
+			w.log.Infof("consul: overriding target port to %d from proxy config", w.downstream.TargetPort)
+		}
 		if f, ok := srv.Proxy.Config["enable_forwardfor"].(bool); ok {
 			w.downstream.EnableForwardFor = f
 		}
