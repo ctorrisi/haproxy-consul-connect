@@ -119,7 +119,8 @@ func generateUpstreamServers(opts Options, certStore CertificateStore, cfg consu
 		Ssl:            models.ServerSslEnabled,
 		SslCertificate: crtPath,
 		SslCafile:      caPath,
-		Verify:         models.ServerVerifyNone,
+		Verify:         models.ServerVerifyRequired,
+		NoVerifyhost:   models.ServerNoVerifyhostEnabled,
 		Maintenance:    models.ServerMaintenanceEnabled,
 	}
 
