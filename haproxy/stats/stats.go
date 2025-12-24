@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/consul/api"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,10 +39,7 @@ func (s *Stats) Run() error {
 		go s.register()
 	}
 
-	go s.runMetrics()
-
 	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.Handler())
 	mux.Handle("/ready", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		<-s.ready
 		rw.Write([]byte("ready"))
@@ -87,7 +83,7 @@ func (s *Stats) register() {
 			Port: port,
 			Checks: api.AgentServiceChecks{
 				&api.AgentServiceCheck{
-					HTTP:                           fmt.Sprintf("http://localhost:%d/metrics", port),
+					HTTP:                           fmt.Sprintf("http://localhost:%d/health", port),
 					Interval:                       (10 * time.Second).String(),
 					DeregisterCriticalServiceAfter: time.Minute.String(),
 				},

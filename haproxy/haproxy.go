@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	spoe "github.com/criteo/haproxy-spoe-go"
 	"github.com/haproxytech/haproxy-consul-connect/consul"
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/haproxy_cmd"
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/renderer"
@@ -14,6 +13,8 @@ import (
 	"github.com/haproxytech/haproxy-consul-connect/lib"
 	"github.com/haproxytech/haproxy-consul-connect/utils"
 	"github.com/hashicorp/consul/api"
+	"github.com/negasus/haproxy-spoe-go/agent"
+	"github.com/negasus/haproxy-spoe-go/logger"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/mcuadros/go-syslog.v2"
 )
@@ -126,9 +127,11 @@ func (h *HAProxy) startLogger() error {
 }
 
 func (h *HAProxy) startSPOA() error {
-	spoeAgent := spoe.New(NewSPOEHandler(h.consulClient, func() consul.Config {
+	handler := NewSPOEHandler(h.consulClient, func() consul.Config {
 		return *h.currentConsulConfig
-	}).Handler)
+	})
+
+	spoeAgent := agent.New(handler.Handler, logger.NewDefaultLog())
 
 	lis, err := net.Listen("unix", h.haConfig.SPOESock)
 	if err != nil {

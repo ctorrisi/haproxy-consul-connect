@@ -3,16 +3,14 @@ module github.com/haproxytech/haproxy-consul-connect
 go 1.25.5
 
 require (
-	github.com/criteo/haproxy-spoe-go v1.0.8
 	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9
 	github.com/haproxytech/models/v2 v2.2.0
 	github.com/hashicorp/consul v1.22.2
 	github.com/hashicorp/consul/api v1.33.0
+	github.com/negasus/haproxy-spoe-go v1.0.7
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
-	gopkg.in/d4l3k/messagediff.v1 v1.2.1
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	zvelo.io/ttlru v1.0.10
 )
@@ -23,7 +21,6 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/compute/metadata v0.7.0 // indirect
 	cloud.google.com/go/iam v1.1.13 // indirect
-	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.28 // indirect
@@ -36,9 +33,6 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
-	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
-	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.62.156 // indirect
@@ -64,18 +58,16 @@ require (
 	github.com/aws/smithy-go v1.22.1 // indirect
 	github.com/benbjohnson/immutable v0.4.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bgentry/speakeasy v0.2.0 // indirect
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/circonus-labs/circonus-gometrics v2.3.1+incompatible // indirect
-	github.com/circonus-labs/circonusllhist v0.1.3 // indirect
+	github.com/circonus-labs/circonusllhist v0.1.5 // indirect
 	github.com/cncf/xds/go v0.0.0-20251210132809-ee656c7534f5 // indirect
 	github.com/coreos/etcd v3.3.27+incompatible // indirect
 	github.com/coreos/go-oidc/v3 v3.11.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20220810130054-c7d1c02cb6cf // indirect
-	github.com/d4l3k/messagediff v1.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.3.1 // indirect
 	github.com/denverdino/aliyungo v0.0.0-20170926055100-d3308649c661 // indirect
@@ -91,6 +83,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fullstorydev/grpchan v1.1.1 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
@@ -190,20 +183,16 @@ require (
 	github.com/hashicorp/vault/sdk v0.7.0 // indirect
 	github.com/hashicorp/vic v1.5.1-0.20190403131502-bbfe86ec9443 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/jhump/protoreflect v1.11.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joyent/triton-go v1.7.1-0.20200416154420-6801d15b779f // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kr/text v0.2.0 // indirect
-	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/linode/linodego v0.10.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20220913051719-115f729f3c8c // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/miekg/dns v1.1.69 // indirect
-	github.com/mitchellh/cli v1.1.5 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -225,8 +214,8 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/posener/complete v1.2.3 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
+	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.4 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
@@ -236,10 +225,8 @@ require (
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/shirou/gopsutil/v3 v3.22.9 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/softlayer/softlayer-go v0.0.0-20180806151055-260589d94c7d // indirect
-	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go v1.0.162 // indirect
@@ -278,8 +265,8 @@ require (
 	golang.org/x/tools v0.40.0 // indirect
 	google.golang.org/api v0.195.0 // indirect
 	google.golang.org/genproto v0.0.0-20240823204242-4ba0660f739c // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251222181119-0a764e51fe1b // indirect
 	google.golang.org/grpc v1.75.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

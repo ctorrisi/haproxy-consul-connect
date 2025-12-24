@@ -3,12 +3,8 @@ package haproxy
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
-	"runtime"
-
 	"text/template"
 
 	"github.com/haproxytech/haproxy-consul-connect/lib"
@@ -18,10 +14,12 @@ import (
 
 var defaultsHAProxyParams = utils.HAProxyParams{
 	Globals: map[string][]string{
-		"stats":    {"timeout 2m"},
-		"nbthread": {fmt.Sprint(runtime.GOMAXPROCS(0))},
-		"ulimit-n": {"65536"},
-		"maxconn":  {"32000"},
+		"stats":          {"timeout 2m"},
+		"nbthread":       {"1"},
+		"ulimit-n":       {"4096"},
+		"maxconn":        {"1024"},
+		"tune.bufsize":   {"8192"},
+		"tune.maxrewrite": {"1024"},
 	},
 	Defaults: map[string][]string{
 		"http-reuse": {"always"},
@@ -87,7 +85,7 @@ func newHaConfig(baseDir string, params utils.HAProxyParams, sd *lib.Shutdown) (
 	cfg := &haConfig{}
 
 	sd.Add(1)
-	base, err := ioutil.TempDir(baseDir, "haproxy-connect-")
+	base, err := os.MkdirTemp(baseDir, "haproxy-connect-")
 	if err != nil {
 		sd.Done()
 		return nil, err

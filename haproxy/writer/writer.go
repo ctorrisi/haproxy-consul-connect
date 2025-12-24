@@ -2,7 +2,6 @@ package writer
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"syscall"
@@ -28,7 +27,7 @@ func (w *ConfigWriter) ApplyConfig(config string) error {
 	tmpPath := w.configPath + ".new"
 
 	// Write to temp file
-	err := ioutil.WriteFile(tmpPath, []byte(config), 0600)
+	err := os.WriteFile(tmpPath, []byte(config), 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write temp config: %w", err)
 	}

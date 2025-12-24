@@ -3,13 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/haproxytech/haproxy-consul-connect/haproxy"
 	"os"
 	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 
-	haproxy "github.com/haproxytech/haproxy-consul-connect/haproxy"
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/haproxy_cmd"
 	"github.com/haproxytech/haproxy-consul-connect/lib"
 	"github.com/haproxytech/haproxy-consul-connect/utils"
