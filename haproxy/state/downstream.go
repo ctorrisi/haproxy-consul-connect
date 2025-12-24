@@ -43,7 +43,7 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 			Ssl:            true,
 			SslCertificate: crtPath,
 			SslCafile:      caPath,
-			Verify:         models.BindVerifyNone, // Disabled for debugging
+			Verify:         models.BindVerifyRequired,
 		},
 		FilterCompression: &FrontendFilter{
 			Filter: models.Filter{

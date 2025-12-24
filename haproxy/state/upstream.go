@@ -119,8 +119,7 @@ func generateUpstreamServers(opts Options, certStore CertificateStore, cfg consu
 		Ssl:            models.ServerSslEnabled,
 		SslCertificate: crtPath,
 		SslCafile:      caPath,
-		Verify:         models.ServerVerifyNone, // Disabled for debugging
-		// Sni:            fmt.Sprintf("str(\"%s\")", cfg.ServiceName), // Disabled for debugging
+		Verify:         models.BindVerifyRequired,
 		Maintenance:    models.ServerMaintenanceEnabled,
 	}
 
