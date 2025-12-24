@@ -14,7 +14,6 @@ import (
 	"github.com/haproxytech/haproxy-consul-connect/consul"
 	"github.com/hashicorp/consul/agent/connect"
 	"github.com/hashicorp/consul/api"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -156,7 +155,7 @@ func (h *SPOEHandler) fetchAutz(target, uri string, serial []byte) (bool, error)
 		ClientCertSerial: connect.HexString(serial),
 	})
 	if err != nil {
-		return false, errors.Wrap(err, "authz call failed")
+		return false, fmt.Errorf("authz call failed: %w", err)
 	}
 
 	return resp.Authorized, nil

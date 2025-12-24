@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/haproxytech/haproxy-consul-connect/lib"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,11 +33,11 @@ func runCommand(sd *lib.Shutdown, logger Logger, cmdPath string, args ...string)
 	err = cmd.Start()
 	if err != nil {
 		sd.Done()
-		return nil, errors.Wrapf(err, "error starting %s", file)
+		return nil, fmt.Errorf("error starting %s: %w", file, err)
 	}
 	if cmd.Process == nil {
 		sd.Done()
-		return nil, errors.Wrapf(err, "Process '%s' could not be started", file)
+		return nil, fmt.Errorf("process '%s' could not be started", file)
 	}
 	exited := uint32(0)
 	go func() {

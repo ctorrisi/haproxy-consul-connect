@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/facebookgo/freeport"
 	"github.com/haproxytech/haproxy-consul-connect/consul"
 	haproxy "github.com/haproxytech/haproxy-consul-connect/haproxy"
 	"github.com/haproxytech/haproxy-consul-connect/lib"
 	"github.com/haproxytech/haproxy-consul-connect/utils"
 	"github.com/hashicorp/consul/agent"
 	"github.com/hashicorp/consul/api"
+	"github.com/hashicorp/consul/sdk/freeport"
 	"github.com/hashicorp/consul/testrpc"
 	"github.com/stretchr/testify/require"
 )
@@ -39,8 +39,7 @@ func startAgent(t *testing.T, sd *lib.Shutdown) *api.Client {
 }
 
 func startConnectService(t *testing.T, sd *lib.Shutdown, client *api.Client, reg *api.AgentServiceRegistration) (chan struct{}, int, map[string]int) {
-	sidecarPort, err := freeport.Get()
-	require.NoError(t, err)
+	sidecarPort := freeport.GetOne(t)
 	reg.Connect.SidecarService.Port = sidecarPort
 	reg.Connect.SidecarService.Checks = api.AgentServiceChecks{
 		&api.AgentServiceCheck{
@@ -49,14 +48,12 @@ func startConnectService(t *testing.T, sd *lib.Shutdown, client *api.Client, reg
 		},
 	}
 
-	servicePort, err := freeport.Get()
-	require.NoError(t, err)
+	servicePort := freeport.GetOne(t)
 	reg.Port = servicePort
 
 	upstreamPorts := map[string]int{}
 	for i, up := range reg.Connect.SidecarService.Proxy.Upstreams {
-		upPort, err := freeport.Get()
-		require.NoError(t, err)
+		upPort := freeport.GetOne(t)
 		reg.Connect.SidecarService.Proxy.Upstreams[i].LocalBindPort = upPort
 		upstreamPorts[up.DestinationName] = upPort
 	}

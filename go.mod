@@ -3,12 +3,11 @@ module github.com/haproxytech/haproxy-consul-connect
 go 1.25.5
 
 require (
-	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9
 	github.com/haproxytech/models/v2 v2.2.0
 	github.com/hashicorp/consul v1.22.2
 	github.com/hashicorp/consul/api v1.33.0
+	github.com/hashicorp/consul/sdk v0.17.0
 	github.com/negasus/haproxy-spoe-go v1.0.7
-	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
@@ -138,7 +137,6 @@ require (
 	github.com/hashicorp/consul-net-rpc v0.0.0-20250728073021-c7e89c86ae17 // indirect
 	github.com/hashicorp/consul/envoyextensions v0.9.0 // indirect
 	github.com/hashicorp/consul/proto-public v0.7.0 // indirect
-	github.com/hashicorp/consul/sdk v0.17.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-bexpr v0.1.15 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -212,6 +210,7 @@ require (
 	github.com/packethost/packngo v0.1.1-0.20180711074735-b9cb5096f54c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
