@@ -2,41 +2,27 @@ package haproxy_cmd
 
 import (
 	"fmt"
-	"net"
-	"net/http"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/haproxytech/haproxy-consul-connect/haproxy/dataplane"
-	"github.com/haproxytech/haproxy-consul-connect/haproxy/dataplanelog"
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/halog"
 	"github.com/haproxytech/haproxy-consul-connect/lib"
 )
 
 const (
-	// DefaultDataplaneBin is the default dataplaneapi program name
-	DefaultDataplaneBin = "dataplaneapi"
 	// DefaultHAProxyBin is the default HAProxy program name
 	DefaultHAProxyBin = "haproxy"
 )
 
 type Config struct {
-	HAProxyPath             string
-	HAProxyConfigPath       string
-	DataplanePath           string
-	DataplaneTransactionDir string
-	DataplaneSock           string
-	DataplaneUser           string
-	DataplanePass           string
-	DataplaneLogLevel       string
-	MasterRuntime           string
+	HAProxyPath       string
+	HAProxyConfigPath string
+	MasterRuntime     string
 }
 
-func Start(sd *lib.Shutdown, cfg Config) (*dataplane.Dataplane, error) {
+func Start(sd *lib.Shutdown, cfg Config) (int, error) {
 	haCmd, err := runCommand(sd, halog.New,
 		cfg.HAProxyPath,
 		"-W",
@@ -45,72 +31,14 @@ func Start(sd *lib.Shutdown, cfg Config) (*dataplane.Dataplane, error) {
 		cfg.HAProxyConfigPath,
 	)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	cmd, err := runCommand(sd, dataplanelog.New,
-		cfg.DataplanePath,
-		"--scheme", "unix",
-		"--socket-path", cfg.DataplaneSock,
-		"--haproxy-bin", cfg.HAProxyPath,
-		"--config-file", cfg.HAProxyConfigPath,
-		"--reload-cmd", fmt.Sprintf("kill -SIGUSR2 %d", haCmd.Process.Pid),
-		"--restart-cmd", fmt.Sprintf("kill -SIGUSR2 %d", haCmd.Process.Pid),
-		"--reload-delay", "1",
-		"--userlist", "controller",
-		"--transaction-dir", cfg.DataplaneTransactionDir,
-		"--master-runtime", cfg.MasterRuntime,
-		"--master-worker-mode",
-		"--log-format", "JSON",
-		"--log-level", cfg.DataplaneLogLevel,
-	)
-	cleanupHAProxy := func() {
-		haCmd.Process.Signal(os.Kill)
-	}
-	if err != nil {
-		cleanupHAProxy()
-		return nil, err
-	}
-	if cmd.Process == nil {
-		cleanupHAProxy()
-		return nil, fmt.Errorf("%s failed to start", cfg.DataplanePath)
+	if haCmd.Process == nil {
+		return 0, fmt.Errorf("HAProxy failed to start")
 	}
 
-	dataplaneClient := dataplane.New(
-		"http://unix-sock",
-		cfg.DataplaneUser,
-		cfg.DataplanePass,
-		&http.Client{
-			Timeout: 5 * time.Second,
-			Transport: &http.Transport{
-				Dial: func(proto, addr string) (conn net.Conn, err error) {
-					return net.Dial("unix", cfg.DataplaneSock)
-				},
-			},
-		},
-	)
-
-	// wait for startup
-	for i := time.Duration(0); i < (5*time.Second)/(100*time.Millisecond); i++ {
-		select {
-		case <-sd.Stop:
-			return nil, fmt.Errorf("exited")
-		default:
-		}
-
-		err = dataplaneClient.Ping()
-		if err != nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-
-		break
-	}
-	if err != nil {
-		return nil, fmt.Errorf("timeout waiting for dataplaneapi: %s", err)
-	}
-
-	return dataplaneClient, nil
+	return haCmd.Process.Pid, nil
 }
 
 // getVersion Launch Help from program path and Find Version
@@ -126,10 +54,10 @@ func getVersion(path string) (string, error) {
 }
 
 // CheckEnvironment Verifies that all dependencies are correct
-func CheckEnvironment(dataplaneapiBin, haproxyBin string) error {
+func CheckEnvironment(haproxyBin string) error {
 	var err error
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(1)
 	ensureVersion := func(path, minVer string, maxVer string) {
 		defer wg.Done()
 		currVer, e := getVersion(path)
@@ -156,7 +84,6 @@ func CheckEnvironment(dataplaneapiBin, haproxyBin string) error {
 			return
 		}
 	}
-	go ensureVersion(dataplaneapiBin, "2.1", "3.0")
 	go ensureVersion(haproxyBin, "2.0", "4.0")
 
 	wg.Wait()

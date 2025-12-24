@@ -73,7 +73,7 @@ func (s *Stats) runMetrics() {
 	upMetric.WithLabelValues(s.cfg.ServiceName).Set(1)
 	for {
 		time.Sleep(time.Second)
-		stats, err := s.dpapi.Stats()
+		stats, err := s.statsSocket.Stats()
 		if err != nil {
 			log.Error(err)
 			continue

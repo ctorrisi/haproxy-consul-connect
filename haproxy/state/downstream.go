@@ -47,8 +47,7 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 		},
 		FilterCompression: &FrontendFilter{
 			Filter: models.Filter{
-				Index: int64p(0),
-				Type:  models.FilterTypeCompression,
+				Type: models.FilterTypeCompression,
 			},
 		},
 	}
@@ -56,7 +55,6 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 	// Logging
 	if opts.LogRequests && opts.LogSocket != "" {
 		fe.LogTarget = &models.LogTarget{
-			Index:    int64p(0),
 			Address:  opts.LogSocket,
 			Facility: models.LogTargetFacilityLocal0,
 			Format:   models.LogTargetFormatRfc5424,
@@ -67,13 +65,11 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 	if opts.EnableIntentions {
 		fe.FilterSpoe = &FrontendFilter{
 			Filter: models.Filter{
-				Index:      int64p(0),
 				Type:       models.FilterTypeSpoe,
 				SpoeEngine: "intentions",
 				SpoeConfig: opts.SPOEConfigPath,
 			},
 			Rule: models.TCPRequestRule{
-				Index:    int64p(0),
 				Action:   models.TCPRequestRuleActionReject,
 				Cond:     models.TCPRequestRuleCondUnless,
 				CondTest: "{ var(sess.connect.auth) -m int eq 1 }",
@@ -113,7 +109,6 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 	// Logging
 	if opts.LogRequests && opts.LogSocket != "" {
 		be.LogTarget = &models.LogTarget{
-			Index:    int64p(0),
 			Address:  opts.LogSocket,
 			Facility: models.LogTargetFacilityLocal0,
 			Format:   models.LogTargetFormatRfc5424,
@@ -123,7 +118,6 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 	// App name header
 	if cfg.AppNameHeaderName != "" && beMode == models.BackendModeHTTP {
 		be.HTTPRequestRules = append(be.HTTPRequestRules, models.HTTPRequestRule{
-			Index:     int64p(0),
 			Type:      models.HTTPRequestRuleTypeAddHeader,
 			HdrName:   cfg.AppNameHeaderName,
 			HdrFormat: "%[var(sess.connect.source_app)]",

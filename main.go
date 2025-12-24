@@ -51,8 +51,8 @@ func (consulLogger) Errorf(format string, args ...interface{}) {
 }
 
 // validateRequirements Checks that dependencies are present
-func validateRequirements(dataplaneBin, haproxyBin string) error {
-	err := haproxy_cmd.CheckEnvironment(dataplaneBin, haproxyBin)
+func validateRequirements(haproxyBin string) error {
+	err := haproxy_cmd.CheckEnvironment(haproxyBin)
 	if err != nil {
 		msg := fmt.Sprintf("Some external dependencies are missing: %s", err.Error())
 		os.Stderr.WriteString(fmt.Sprintf("%s\n", msg))
@@ -67,12 +67,10 @@ func main() {
 	flag.Var(&haproxyParamsFlag, "haproxy-param", "Global or defaults Haproxy config parameter to set in config. Can be specified multiple times. Must be of the form `defaults.name=value` or `global.name=value`")
 	versionFlag := flag.Bool("version", false, "Show version and exit")
 	logLevel := flag.String("log-level", "INFO", "Log level")
-	dataplaneLogLevel := flag.String("dataplane-log-level", "info", "Dataplane Log level")
 	consulAddr := flag.String("http-addr", "127.0.0.1:8500", "Consul agent address")
 	service := flag.String("sidecar-for", "", "The consul service id to proxy")
 	serviceTag := flag.String("sidecar-for-tag", "", "The consul service id to proxy")
 	haproxyBin := flag.String("haproxy", haproxy_cmd.DefaultHAProxyBin, "Haproxy binary path")
-	dataplaneBin := flag.String("dataplane", haproxy_cmd.DefaultDataplaneBin, "Dataplane binary path")
 	haproxyCfgBasePath := flag.String("haproxy-cfg-base-path", "/tmp", "Haproxy binary path")
 	statsListenAddr := flag.String("stats-addr", "", "Listen addr for stats server")
 	statsServiceRegister := flag.Bool("stats-service-register", false, "Register a consul service for connect stats")
@@ -84,8 +82,8 @@ func main() {
 		fmt.Printf("Version: %s ; BuildTime: %s ; GitHash: %s\n", Version, BuildTime, GitHash)
 		os.Exit(0)
 	}
-	if err := validateRequirements(*dataplaneBin, *haproxyBin); err != nil {
-		fmt.Printf("ERROR: dataplane API / HAProxy dependencies are not satisfied: %s\n", err)
+	if err := validateRequirements(*haproxyBin); err != nil {
+		fmt.Printf("ERROR: HAProxy dependencies are not satisfied: %s\n", err)
 		os.Exit(4)
 	}
 
@@ -197,8 +195,6 @@ func main() {
 
 	hap := haproxy.New(consulClient, watcher.C, utils.Options{
 		HAProxyBin:           *haproxyBin,
-		DataplaneBin:         *dataplaneBin,
-		DataplaneLogLevel:    *dataplaneLogLevel,
 		ConfigBaseDir:        *haproxyCfgBasePath,
 		EnableIntentions:     *enableIntentions,
 		StatsListenAddr:      *statsListenAddr,

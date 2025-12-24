@@ -46,9 +46,6 @@ defaults
 	compression algo gzip
 	compression type text/css text/html text/javascript application/javascript text/plain text/xml application/json
 
-userlist controller
-	user {{.DataplaneUser}} insecure-password {{.DataplanePass}}
-
 `
 
 const spoeConfTmpl = `
@@ -73,23 +70,17 @@ spoe-message check-intentions
 
 type baseParams struct {
 	SocketPath    string
-	DataplaneUser string
-	DataplanePass string
 	HAProxyParams utils.HAProxyParams
 }
 
 type haConfig struct {
-	Base                    string
-	HAProxy                 string
-	SPOE                    string
-	SPOESock                string
-	StatsSock               string
-	MasterSocketPath        string
-	DataplaneSock           string
-	DataplaneTransactionDir string
-	DataplaneUser           string
-	DataplanePass           string
-	LogsSock                string
+	Base             string
+	HAProxy          string
+	SPOE             string
+	SPOESock         string
+	StatsSock        string
+	MasterSocketPath string
+	LogsSock         string
 }
 
 func newHaConfig(baseDir string, params utils.HAProxyParams, sd *lib.Shutdown) (*haConfig, error) {
@@ -115,16 +106,7 @@ func newHaConfig(baseDir string, params utils.HAProxyParams, sd *lib.Shutdown) (
 	cfg.SPOESock = path.Join(base, "spoe.sock")
 	cfg.StatsSock = path.Join(base, "haproxy.sock")
 	cfg.MasterSocketPath = path.Join(base, "haproxy-master.sock")
-	cfg.DataplaneSock = path.Join(base, "dataplane.sock")
-	cfg.DataplaneTransactionDir = path.Join(base, "dataplane-transactions")
 	cfg.LogsSock = path.Join(base, "logs.sock")
-
-	// Create the transaction directory for dataplane API
-	err = os.MkdirAll(cfg.DataplaneTransactionDir, 0755)
-	if err != nil {
-		sd.Done()
-		return nil, fmt.Errorf("failed to create transaction directory: %s", err)
-	}
 
 	tmpl, err := template.New("cfg").Parse(baseCfgTmpl)
 	if err != nil {
@@ -142,13 +124,8 @@ func newHaConfig(baseDir string, params utils.HAProxyParams, sd *lib.Shutdown) (
 		}
 	}()
 
-	cfg.DataplanePass = createRandomString()
-	cfg.DataplaneUser = "hapeoxy"
-
 	err = tmpl.Execute(cfgFile, baseParams{
 		SocketPath:    cfg.StatsSock,
-		DataplaneUser: cfg.DataplaneUser,
-		DataplanePass: cfg.DataplanePass,
 		HAProxyParams: defaultsHAProxyParams.With(params),
 	})
 	if err != nil {

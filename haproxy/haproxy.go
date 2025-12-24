@@ -6,10 +6,11 @@ import (
 
 	spoe "github.com/criteo/haproxy-spoe-go"
 	"github.com/haproxytech/haproxy-consul-connect/consul"
-	"github.com/haproxytech/haproxy-consul-connect/haproxy/dataplane"
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/haproxy_cmd"
+	"github.com/haproxytech/haproxy-consul-connect/haproxy/renderer"
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/state"
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/stats"
+	"github.com/haproxytech/haproxy-consul-connect/haproxy/writer"
 	"github.com/haproxytech/haproxy-consul-connect/lib"
 	"github.com/haproxytech/haproxy-consul-connect/utils"
 	"github.com/hashicorp/consul/api"
@@ -18,9 +19,12 @@ import (
 )
 
 type HAProxy struct {
-	opts            utils.Options
-	dataplaneClient *dataplane.Dataplane
-	consulClient    *api.Client
+	opts         utils.Options
+	renderer     *renderer.Renderer
+	configWriter *writer.ConfigWriter
+	statsSocket  *stats.StatsSocket
+	masterPID    int
+	consulClient *api.Client
 
 	cfgC chan consul.Config
 
@@ -35,9 +39,6 @@ type HAProxy struct {
 func New(consulClient *api.Client, cfg chan consul.Config, opts utils.Options) *HAProxy {
 	if opts.HAProxyBin == "" {
 		opts.HAProxyBin = haproxy_cmd.DefaultHAProxyBin
-	}
-	if opts.DataplaneBin == "" {
-		opts.DataplaneBin = haproxy_cmd.DefaultDataplaneBin
 	}
 	return &HAProxy{
 		opts:         opts,
@@ -73,20 +74,23 @@ func (h *HAProxy) start(sd *lib.Shutdown) error {
 	}
 
 	var err error
-	h.dataplaneClient, err = haproxy_cmd.Start(sd, haproxy_cmd.Config{
-		HAProxyPath:             h.opts.HAProxyBin,
-		HAProxyConfigPath:       h.haConfig.HAProxy,
-		DataplanePath:           h.opts.DataplaneBin,
-		DataplaneTransactionDir: h.haConfig.DataplaneTransactionDir,
-		DataplaneSock:           h.haConfig.DataplaneSock,
-		DataplaneUser:           h.haConfig.DataplaneUser,
-		DataplanePass:           h.haConfig.DataplanePass,
-		DataplaneLogLevel:       h.opts.DataplaneLogLevel,
-		MasterRuntime:           h.haConfig.MasterSocketPath,
+	h.masterPID, err = haproxy_cmd.Start(sd, haproxy_cmd.Config{
+		HAProxyPath:       h.opts.HAProxyBin,
+		HAProxyConfigPath: h.haConfig.HAProxy,
+		MasterRuntime:     h.haConfig.MasterSocketPath,
 	})
 	if err != nil {
 		return err
 	}
+
+	// Initialize renderer
+	h.renderer = renderer.New()
+
+	// Initialize config writer
+	h.configWriter = writer.New(h.haConfig.HAProxy, h.opts.HAProxyBin, h.masterPID)
+
+	// Initialize stats socket
+	h.statsSocket = stats.NewStatsSocket(h.haConfig.StatsSock)
 
 	err = h.startStats()
 	if err != nil {
@@ -148,7 +152,7 @@ func (h *HAProxy) startStats() error {
 
 	s := stats.New(
 		h.consulClient,
-		h.dataplaneClient,
+		h.statsSocket,
 		h.Ready,
 		stats.Config{
 			RegisterService: h.opts.StatsRegisterService,

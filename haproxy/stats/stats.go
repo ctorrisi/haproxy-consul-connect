@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/haproxytech/haproxy-consul-connect/haproxy/dataplane"
 	"github.com/hashicorp/consul/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -23,15 +22,15 @@ type Config struct {
 type Stats struct {
 	cfg          Config
 	consulClient *api.Client
-	dpapi        *dataplane.Dataplane
+	statsSocket  *StatsSocket
 	ready        chan struct{}
 }
 
-func New(consulClient *api.Client, dpapi *dataplane.Dataplane, ready chan struct{}, cfg Config) *Stats {
+func New(consulClient *api.Client, statsSocket *StatsSocket, ready chan struct{}, cfg Config) *Stats {
 	return &Stats{
 		cfg:          cfg,
 		consulClient: consulClient,
-		dpapi:        dpapi,
+		statsSocket:  statsSocket,
 		ready:        ready,
 	}
 }

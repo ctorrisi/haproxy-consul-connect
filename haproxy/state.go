@@ -4,26 +4,23 @@ import (
 	"time"
 
 	"github.com/haproxytech/haproxy-consul-connect/consul"
+	"github.com/haproxytech/haproxy-consul-connect/haproxy/renderer"
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/state"
 	"github.com/haproxytech/haproxy-consul-connect/lib"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/d4l3k/messagediff.v1"
 )
 
 const (
-	stateApplyThrottle   = 500 * time.Millisecond
-	resyncConfigInterval = 5 * time.Minute
-	retryBackoff         = 3 * time.Second
+	stateApplyThrottle = 500 * time.Millisecond
+	retryBackoff       = 3 * time.Second
 )
 
 func (h *HAProxy) watch(sd *lib.Shutdown) error {
 	throttle := time.Tick(stateApplyThrottle)
-	resyncConfig := time.Tick(resyncConfigInterval)
 	retry := make(chan struct{})
 
 	var currentState state.State
 	var currentConfig consul.Config
-	dirty := false
 	started := false
 	ready := false
 
@@ -53,13 +50,8 @@ func (h *HAProxy) watch(sd *lib.Shutdown) error {
 				h.currentConsulConfig = &c
 				currentConfig = c
 				inputReceived = true
-			case <-resyncConfig:
-				log.Info("periodic haproxy config sync check")
-				dirty = true
-				inputReceived = true
 			case <-retry:
 				log.Warn("retrying to apply config")
-				dirty = true
 				inputReceived = true
 			}
 		}
@@ -70,37 +62,6 @@ func (h *HAProxy) watch(sd *lib.Shutdown) error {
 				return err
 			}
 			started = true
-		}
-
-		if dirty {
-			fromHa, err := state.FromHAProxy(h.dataplaneClient)
-			if err != nil {
-				log.Errorf("error retrieving haproxy conf: %s", err)
-				waitAndRetry()
-				continue
-			}
-			// Don't check spoe filter index:
-			//   - all filters are retrieved at once, hence index are updated accordingly to the position
-			//   - but filter are created one at a time, api doesn't allow to create all at once, hence index must be set to 0
-			for index, currentStateFrontend := range currentState.Frontends {
-				// Check if fromHa has the same number of frontends to avoid index out of range
-				if index >= len(fromHa.Frontends) {
-					log.Warnf("frontend index %d out of range in fromHa (len=%d), skipping filter index sync", index, len(fromHa.Frontends))
-					break
-				}
-				if currentStateFrontend.FilterSpoe != nil && fromHa.Frontends[index].FilterSpoe != nil {
-					fromHa.Frontends[index].FilterSpoe.Filter.Index = currentStateFrontend.FilterSpoe.Filter.Index
-				}
-				if currentStateFrontend.FilterCompression != nil && fromHa.Frontends[index].FilterCompression != nil {
-					fromHa.Frontends[index].FilterCompression.Filter.Index = currentStateFrontend.FilterCompression.Filter.Index
-				}
-			}
-			diff, equal := messagediff.PrettyDiff(currentState, fromHa)
-			if !equal {
-				log.Errorf("diff found between expected state and haproxy state: %s", diff)
-			}
-			currentState = fromHa
-			dirty = false
 		}
 
 		newState, err := state.Generate(state.Options{
@@ -120,20 +81,23 @@ func (h *HAProxy) watch(sd *lib.Shutdown) error {
 			continue
 		}
 
-		tx := h.dataplaneClient.Tnx()
-
 		log.Debugf("applying new state: %+v", newState)
 
-		err = state.Apply(tx, currentState, newState)
+		// Render config
+		config, err := h.renderer.Render(newState, h.haConfig.StatsSock, renderer.HAProxyParams{
+			Globals:  h.opts.HAProxyParams.Globals,
+			Defaults: h.opts.HAProxyParams.Defaults,
+		})
 		if err != nil {
-			log.Error(err)
+			log.Errorf("failed to render config: %s", err)
 			waitAndRetry()
 			continue
 		}
 
-		err = tx.Commit()
+		// Apply config
+		err = h.configWriter.ApplyConfig(config)
 		if err != nil {
-			log.Error(err)
+			log.Errorf("failed to apply config: %s", err)
 			waitAndRetry()
 			continue
 		}

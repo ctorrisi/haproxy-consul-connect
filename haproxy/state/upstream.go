@@ -38,15 +38,13 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 		},
 		FilterCompression: &FrontendFilter{
 			Filter: models.Filter{
-				Index: int64p(0),
-				Type:  models.FilterTypeCompression,
+				Type: models.FilterTypeCompression,
 			},
 		},
 	}
 	if opts.LogRequests && opts.LogSocket != "" {
 		fe.LogTarget = &models.LogTarget{
-			Index:    int64p(0),
-			Address:  opts.LogSocket,
+			Address: opts.LogSocket,
 			Facility: models.LogTargetFacilityLocal0,
 			Format:   models.LogTargetFormatRfc5424,
 		}
@@ -67,7 +65,6 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 	}
 	if opts.LogRequests && opts.LogSocket != "" {
 		be.LogTarget = &models.LogTarget{
-			Index:    int64p(0),
 			Address:  opts.LogSocket,
 			Facility: models.LogTargetFacilityLocal0,
 			Format:   models.LogTargetFormatRfc5424,
