@@ -43,7 +43,7 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 			Ssl:            true,
 			SslCertificate: crtPath,
 			SslCafile:      caPath,
-			Verify:         models.BindVerifyRequired,
+			Verify:         "optional", // Use optional instead of required to skip hostname verification for SPIFFE URI SANs
 		},
 		FilterCompression: &FrontendFilter{
 			Filter: models.Filter{
