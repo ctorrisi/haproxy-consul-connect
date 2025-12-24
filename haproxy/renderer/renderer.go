@@ -49,7 +49,7 @@ frontend {{.Frontend.Name}}
 	mode {{.Frontend.Mode}}
 	{{- end}}
 	{{- if .Bind.Address}}
-	bind {{.Bind.Address}}:{{derefInt64 .Bind.Port}}{{if .Bind.Ssl}} ssl crt {{.Bind.SslCertificate}}{{if .Bind.SslCafile}} ca-file {{.Bind.SslCafile}}{{end}}{{if .Bind.Verify}} verify {{.Bind.Verify}}{{end}}{{if .Bind.NoVerifyhost}} no-verifyhost{{end}}{{end}}
+	bind {{.Bind.Address}}:{{derefInt64 .Bind.Port}}{{if .Bind.Ssl}} ssl crt {{.Bind.SslCertificate}}{{if .Bind.SslCafile}} ca-file {{.Bind.SslCafile}}{{end}}{{if .Bind.Verify}} verify {{.Bind.Verify}}{{end}}{{end}}
 	{{- end}}
 	{{- if .Frontend.DefaultBackend}}
 	default_backend {{.Frontend.DefaultBackend}}
@@ -68,7 +68,11 @@ frontend {{.Frontend.Name}}
 	filter compression
 	{{- end}}
 	{{- if .LogTarget}}
-	log {{.LogTarget.Address}} {{.LogTarget.Facility}}{{if .LogTarget.Format}} {{.LogTarget.Format}}{{end}}
+	{{- if .LogTarget.Format}}
+	log {{.LogTarget.Address}} format {{.LogTarget.Format}} {{.LogTarget.Facility}}
+	{{- else}}
+	log {{.LogTarget.Address}} {{.LogTarget.Facility}}
+	{{- end}}
 	{{- end}}
 {{end}}
 
@@ -96,7 +100,11 @@ backend {{.Backend.Name}}
 	{{- end}}
 	{{- end}}
 	{{- if .LogTarget}}
-	log {{.LogTarget.Address}} {{.LogTarget.Facility}}{{if .LogTarget.Format}} {{.LogTarget.Format}}{{end}}
+	{{- if .LogTarget.Format}}
+	log {{.LogTarget.Address}} format {{.LogTarget.Format}} {{.LogTarget.Facility}}
+	{{- else}}
+	log {{.LogTarget.Address}} {{.LogTarget.Facility}}
+	{{- end}}
 	{{- end}}
 	{{- range .HTTPRequestRules}}
 	http-request {{.Type}}{{if .HdrName}} {{.HdrName}}{{end}}{{if .HdrFormat}} {{.HdrFormat}}{{end}}
