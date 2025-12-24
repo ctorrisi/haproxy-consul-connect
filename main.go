@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -95,6 +96,17 @@ func main() {
 	log.SetLevel(ll)
 
 	sd := lib.NewShutdown()
+
+	// Auto-detect Nomad secrets directory if envoy-bootstrap not explicitly set
+	if *envoyBootstrapPath == "" {
+		if nomadSecretsDir := os.Getenv("NOMAD_SECRETS_DIR"); nomadSecretsDir != "" {
+			nomadBootstrapPath := filepath.Join(nomadSecretsDir, "envoy_bootstrap.json")
+			if _, err := os.Stat(nomadBootstrapPath); err == nil {
+				*envoyBootstrapPath = nomadBootstrapPath
+				log.Infof("Auto-detected Envoy bootstrap file from NOMAD_SECRETS_DIR: %s", nomadBootstrapPath)
+			}
+		}
+	}
 
 	// Try to parse Envoy bootstrap file if provided
 	var bootstrapConfig *utils.EnvoyBootstrapConfig

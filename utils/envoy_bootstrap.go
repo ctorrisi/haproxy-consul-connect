@@ -103,20 +103,25 @@ func (c *EnvoyBootstrapConfig) ExtractConsulToken() string {
 	return c.consulToken
 }
 
-// ExtractServiceName extracts the service name from the proxy ID
-// Proxy ID format: _nomad-task-XXXXX-group-GROUPNAME-SERVICENAME-sidecar-proxy
+// ExtractServiceName extracts the service name from the node.cluster field
+// In Nomad's Envoy bootstrap, node.cluster contains the service name
 func (c *EnvoyBootstrapConfig) ExtractServiceName() string {
 	if c == nil {
 		return ""
 	}
 
+	// Use node.cluster as the primary source for service name
+	if c.Node.Cluster != "" {
+		return c.Node.Cluster
+	}
+
+	// Fallback: try to parse from node.id if cluster is not set
+	// Proxy ID format: _nomad-task-XXXXX-group-GROUPNAME-SERVICENAME-sidecar-proxy
 	proxyID := c.Node.ID
 	if proxyID == "" {
 		return ""
 	}
 
-	// For Nomad-generated IDs, the service name is in the proxy ID
-	// Try to extract it by looking for the pattern
 	if strings.Contains(proxyID, "-sidecar-proxy") {
 		parts := strings.Split(proxyID, "-")
 		// Find the index of "sidecar"
@@ -126,11 +131,6 @@ func (c *EnvoyBootstrapConfig) ExtractServiceName() string {
 				return parts[i-1]
 			}
 		}
-	}
-
-	// If we can't parse it, return the cluster name as fallback
-	if c.Node.Cluster != "" {
-		return c.Node.Cluster
 	}
 
 	return ""
