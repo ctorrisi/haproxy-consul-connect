@@ -49,6 +49,13 @@ global
 
 defaults
 	another abdc
+	http-error status 400 content-type text/plain lf-string "Bad Request"
+	http-error status 403 content-type text/plain lf-string "Forbidden"
+	http-error status 408 content-type text/plain lf-string "Request Timeout"
+	http-error status 500 content-type text/plain lf-string "Internal Server Error"
+	http-error status 502 content-type text/plain lf-string "Bad Gateway"
+	http-error status 503 content-type text/plain lf-string "Service Unavailable"
+	http-error status 504 content-type text/plain lf-string "Gateway Timeout"
 	http-reuse always
 	multiple key1 value1
 	multiple key2 value2
