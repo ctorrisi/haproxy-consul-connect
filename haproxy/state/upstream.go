@@ -11,14 +11,14 @@ import (
 func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstream, oldState, newState State) (State, error) {
 	feName := fmt.Sprintf("front_%s", cfg.Name)
 	beName := fmt.Sprintf("back_%s", cfg.Name)
-	feMode := models.FrontendModeTCP
-	beMode := models.BackendModeTCP
+	feMode := models.FrontendModeHTTP
+	beMode := models.BackendModeHTTP
 
 	fePort64 := int64(cfg.LocalBindPort)
 
-	if cfg.Protocol == "http" {
-		feMode = models.FrontendModeHTTP
-		beMode = models.BackendModeHTTP
+	if cfg.Protocol == "tcp" {
+		feMode = models.FrontendModeTCP
+		beMode = models.BackendModeTCP
 	}
 
 	log.Infof("upstream %s: configuring frontend to listen on %s:%d", cfg.Name, cfg.LocalBindAddress, cfg.LocalBindPort)
@@ -29,7 +29,7 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 			DefaultBackend: beName,
 			ClientTimeout:  int64p(int(cfg.ReadTimeout.Milliseconds())),
 			Mode:           feMode,
-			Httplog:        opts.LogRequests && feMode == models.FrontendModeHTTP,
+			Httplog:        opts.LogRequests,
 		},
 		Bind: models.Bind{
 			Name:    fmt.Sprintf("%s_bind", feName),
@@ -38,7 +38,7 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 		},
 	}
 
-	// HTTP-specific features
+	// HTTP-specific features (disabled in TCP mode)
 	if feMode == models.FrontendModeHTTP {
 		fe.FilterCompression = &FrontendFilter{
 			Filter: models.Filter{

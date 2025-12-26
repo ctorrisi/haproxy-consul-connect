@@ -29,7 +29,7 @@ func TestMakeHAProxyParams(t *testing.T) {
 			"timeout http-keep-alive": {"15s"},
 			"timeout queue":           {"5s"},
 			"retries":                 {"3"},
-			"retry-on":                {"all-retryable-errors conn-failure empty-response response-timeout"},
+			"retry-on":                {"all-retryable-errors conn-failure empty-response response-timeout 500 501 502 503 504"},
 			"option clitcpka":         {""},
 			"option srvtcpka":         {""},
 			"option redispatch":       {""},
