@@ -166,6 +166,18 @@ func generateUpstreamServers(opts Options, certStore CertificateStore, cfg consu
 		servers[i].Port = int64p(s.Port)
 		servers[i].Weight = int64p(s.Weight)
 		servers[i].Maintenance = models.ServerMaintenanceDisabled
+
+		// Circuit breaker pattern for upstream health
+		// Consul already health checks, but we add circuit breaker for fast failover
+		servers[i].Check = models.ServerCheckEnabled
+		servers[i].Inter = int64p(300000)  // 300s normal interval
+		servers[i].Fastinter = int64p(2000) // 2s when transitioning UP
+		servers[i].Downinter = int64p(2000) // 2s when transitioning DOWN
+		servers[i].Rise = int64p(1)        // 1 success = UP
+		servers[i].Fall = int64p(1)        // 1 failure = DOWN
+		servers[i].Observe = models.ServerObserveLayer4
+		servers[i].ErrorLimit = 1                            // Trip after 1 error
+		servers[i].OnError = models.ServerOnErrorMarkDown // Immediate failover
 	}
 
 	return servers, nil

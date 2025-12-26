@@ -101,11 +101,23 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 		},
 		Servers: []models.Server{
 			{
-				Name:        "downstream_node",
-				Address:     cfg.TargetAddress,
-				Port:        int64p(cfg.TargetPort),
+				Name:    "downstream_node",
+				Address: cfg.TargetAddress,
+				Port:    int64p(cfg.TargetPort),
+				// Circuit breaker pattern for downstream health
+				// - Infrequent checks in steady state (300s)
+				// - Fast reaction to state changes (2s)
+				// - Immediate failover on connection errors
+				Check:       models.ServerCheckEnabled,
+				Inter:       int64p(300000), // 300s normal interval
+				Fastinter:   int64p(2000),   // 2s when transitioning UP
+				Downinter:   int64p(2000),   // 2s when transitioning DOWN
+				Rise:        int64p(1),      // 1 success = UP
+				Fall:        int64p(1),      // 1 failure = DOWN
+				Observe:     models.ServerObserveLayer4,
+				ErrorLimit:  1,                            // Trip after 1 error
+				OnError:     models.ServerOnErrorMarkDown, // Immediate failover
 				Maintenance: models.ServerMaintenanceDisabled,
-				Check:       models.ServerCheckEnabled, // Health check downstream app
 			},
 		},
 	}
