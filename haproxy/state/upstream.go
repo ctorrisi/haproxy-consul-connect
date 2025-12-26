@@ -82,102 +82,41 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 }
 
 func generateUpstreamServers(opts Options, certStore CertificateStore, cfg consul.Upstream, beName string, oldState State) ([]models.Server, error) {
-	oldBackend, _ := oldState.findBackend(beName)
-
-	idxHANode := func(s models.Server) string {
-		if s.Maintenance == models.ServerMaintenanceEnabled {
-			return "maint"
-		}
-		return fmt.Sprintf("%s:%d", s.Address, *s.Port)
-	}
-	idxConsulNode := func(s consul.UpstreamNode) string {
-		return fmt.Sprintf("%s:%d", s.Host, s.Port)
-	}
-
-	servers := make([]models.Server, len(oldBackend.Servers))
-	copy(servers, oldBackend.Servers)
-	serversIdx := index(servers, func(i int) string {
-		return idxHANode(servers[i])
-	})
-
-	newServersIdx := index(cfg.Nodes, func(i int) string {
-		return idxConsulNode(cfg.Nodes[i])
-	})
-
 	caPath, crtPath, err := certStore.CertsPath(cfg.TLS)
 	if err != nil {
 		return nil, err
 	}
 
-	disabledServer := models.Server{
-		Address:        "127.0.0.1",
-		Port:           int64p(1),
-		Weight:         int64p(1),
-		Ssl:            models.ServerSslEnabled,
-		SslCertificate: crtPath,
-		SslCafile:      caPath,
-		Verify:         models.ServerVerifyNone,
-		Maintenance:    models.ServerMaintenanceEnabled,
-	}
+	servers := make([]models.Server, 0, len(cfg.Nodes))
 
-	emptyServerSlots := make([]int, 0, len(servers))
+	for i, node := range cfg.Nodes {
+		log.Infof("upstream %s: configuring server %s:%d (weight: %d)", beName, node.Host, node.Port, node.Weight)
 
-	// Disable removed servers
-	for i, s := range servers {
-		_, ok := newServersIdx[idxHANode(s)]
-		if ok {
-			continue
+		server := models.Server{
+			Name:           fmt.Sprintf("srv_%d", i),
+			Address:        node.Host,
+			Port:           int64p(node.Port),
+			Weight:         int64p(node.Weight),
+			Ssl:            models.ServerSslEnabled,
+			SslCertificate: crtPath,
+			SslCafile:      caPath,
+			Verify:         models.ServerVerifyNone,
+			Maintenance:    models.ServerMaintenanceDisabled,
+
+			// Circuit breaker pattern for upstream health
+			// Consul already health checks, but we add circuit breaker for fast failover
+			Check:      models.ServerCheckEnabled,
+			Inter:      int64p(300000), // 300s normal interval
+			Fastinter:  int64p(2000),   // 2s when transitioning UP
+			Downinter:  int64p(2000),   // 2s when transitioning DOWN
+			Rise:       int64p(1),      // 1 success = UP
+			Fall:       int64p(1),      // 1 failure = DOWN
+			Observe:    models.ServerObserveLayer4,
+			ErrorLimit: 1,                            // Trip after 1 error
+			OnError:    models.ServerOnErrorMarkDown, // Immediate failover
 		}
 
-		servers[i] = disabledServer
-		servers[i].Name = fmt.Sprintf("srv_%d", i)
-		emptyServerSlots = append(emptyServerSlots, i)
-	}
-
-	// Add new servers
-	for _, s := range cfg.Nodes {
-		i, ok := serversIdx[idxConsulNode(s)]
-		if ok {
-			// if the server exists, just update its certificate in case they changed
-			servers[i].SslCafile = caPath
-			servers[i].SslCertificate = crtPath
-			continue
-		}
-
-		if len(emptyServerSlots) == 0 {
-			l := len(servers)
-			add := l
-			if add == 0 {
-				add = 1
-			}
-			for i := 0; i < add; i++ {
-				server := disabledServer
-				server.Name = fmt.Sprintf("srv_%d", i+l)
-				servers = append(servers, server)
-				emptyServerSlots = append(emptyServerSlots, i+l)
-			}
-		}
-
-		i = emptyServerSlots[0]
-		emptyServerSlots = emptyServerSlots[1:]
-
-		log.Infof("upstream %s: configuring server %s:%d (weight: %d)", beName, s.Host, s.Port, s.Weight)
-		servers[i].Address = s.Host
-		servers[i].Port = int64p(s.Port)
-		servers[i].Weight = int64p(s.Weight)
-		servers[i].Maintenance = models.ServerMaintenanceDisabled
-
-		// Circuit breaker pattern for upstream health
-		// Consul already health checks, but we add circuit breaker for fast failover
-		servers[i].Check = models.ServerCheckEnabled
-		servers[i].Inter = int64p(300000)  // 300s normal interval
-		servers[i].Fastinter = int64p(2000) // 2s when transitioning UP
-		servers[i].Downinter = int64p(2000) // 2s when transitioning DOWN
-		servers[i].Rise = int64p(1)        // 1 success = UP
-		servers[i].Fall = int64p(1)        // 1 failure = DOWN
-		servers[i].Observe = models.ServerObserveLayer4
-		servers[i].ErrorLimit = 1                            // Trip after 1 error
-		servers[i].OnError = models.ServerOnErrorMarkDown // Immediate failover
+		servers = append(servers, server)
 	}
 
 	return servers, nil
