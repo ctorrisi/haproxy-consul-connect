@@ -21,13 +21,13 @@ var DefaultHAProxyParams = HAProxyParams{
 		// Connection pooling - critical for service mesh performance
 		"http-reuse": {"always"},
 
-		// Timeouts - prevent hung connections (matches Envoy defaults)
-		"timeout connect":         {"5s"},  // Max time to establish backend connection (Envoy default)
-		"timeout client":          {"30s"}, // Max client inactivity (Envoy default)
-		"timeout server":          {"30s"}, // Max server inactivity (Envoy default)
-		"timeout http-request":    {"5s"},  // Max time for complete HTTP request
-		"timeout http-keep-alive": {"15s"}, // Max time waiting for new request on keep-alive (Envoy idle timeout)
-		"timeout queue":           {"5s"},  // Max time request can stay in queue
+		// Timeouts - optimized for co-located service mesh
+		"timeout connect":         {"100ms"}, // Fast failover for local services (typically <10ms)
+		"timeout client":          {"30s"},   // Max client inactivity (external clients can be slow)
+		"timeout server":          {"10s"},   // Max server inactivity (local services should respond quickly)
+		"timeout http-request":    {"5s"},    // Max time for complete HTTP request
+		"timeout http-keep-alive": {"15s"},   // Max time waiting for new request on keep-alive
+		"timeout queue":           {"5s"},    // Max time request can stay in queue
 
 		// Retries - improve resilience against transient failures
 		"retries":  {"3"}, // Default retry count (overridden per backend based on server count)

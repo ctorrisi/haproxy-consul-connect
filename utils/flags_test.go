@@ -22,9 +22,9 @@ func TestMakeHAProxyParams(t *testing.T) {
 	require.Equal(t, HAProxyParams{
 		Defaults: map[string][]string{
 			"http-reuse":              {"always"}, // from defaults
-			"timeout connect":         {"5s"},
+			"timeout connect":         {"100ms"},
 			"timeout client":          {"30s"},
-			"timeout server":          {"30s"},
+			"timeout server":          {"10s"},
 			"timeout http-request":    {"5s"},
 			"timeout http-keep-alive": {"15s"},
 			"timeout queue":           {"5s"},

@@ -91,6 +91,9 @@ backend {{.Backend.Name}}
 	{{- if .Backend.ConnectTimeout}}
 	timeout connect {{.Backend.ConnectTimeout}}ms
 	{{- end}}
+	{{- if .Backend.Retries}}
+	retries {{derefInt64 .Backend.Retries}}
+	{{- end}}
 	{{- if .Backend.Forwardfor}}
 	{{- if .Backend.Forwardfor.Enabled}}
 	{{- if eq .Backend.Forwardfor.Enabled "enabled"}}
@@ -109,7 +112,7 @@ backend {{.Backend.Name}}
 	http-request {{.Type}}{{if .HdrName}} {{.HdrName}}{{end}}{{if .HdrFormat}} {{.HdrFormat}}{{end}}
 	{{- end}}
 	{{- range .Servers}}
-	server {{.Name}} {{.Address}}:{{derefInt64 .Port}}{{if .Ssl}} ssl crt {{.SslCertificate}}{{if .SslCafile}} ca-file {{.SslCafile}}{{end}}{{if .Verify}} verify {{.Verify}}{{end}}{{if .NoVerifyhost}} no-verifyhost{{end}} ktls on{{end}}{{if .Weight}} weight {{derefInt64 .Weight}}{{end}}{{if eq .Maintenance "enabled"}} disabled{{end}}{{if eq .Check "enabled"}} check{{end}}
+	server {{.Name}} {{.Address}}:{{derefInt64 .Port}}{{if .Ssl}} ssl crt {{.SslCertificate}}{{if .SslCafile}} ca-file {{.SslCafile}}{{end}}{{if .Verify}} verify {{.Verify}}{{end}}{{if .NoVerifyhost}} no-verifyhost{{end}} ktls on{{end}}{{if .Weight}} weight {{derefInt64 .Weight}}{{end}}{{if eq .Maintenance "enabled"}} disabled{{end}}{{if eq .Check "enabled"}} check{{end}}{{if .Inter}} inter {{derefInt64 .Inter}}{{end}}{{if .Fastinter}} fastinter {{derefInt64 .Fastinter}}{{end}}{{if .Downinter}} downinter {{derefInt64 .Downinter}}{{end}}{{if .Rise}} rise {{derefInt64 .Rise}}{{end}}{{if .Fall}} fall {{derefInt64 .Fall}}{{end}}{{if .Observe}} observe {{.Observe}}{{end}}{{if .ErrorLimit}} error-limit {{.ErrorLimit}}{{end}}{{if .OnError}} on-error {{.OnError}}{{end}}
 	{{- end}}
 {{end}}
 `

@@ -66,11 +66,11 @@ defaults
 	retry-on all-retryable-errors conn-failure empty-response response-timeout 500 501 502 503 504
 	test.with.dots 3
 	timeout client 30s
-	timeout connect 5s
+	timeout connect 100ms
 	timeout http-keep-alive 15s
 	timeout http-request 5s
 	timeout queue 5s
-	timeout server 30s
+	timeout server 10s
 
 `
 	require.Equal(t, expected_conf, capture_stdout.String())
