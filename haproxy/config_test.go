@@ -2,8 +2,6 @@ package haproxy
 
 import (
 	"bytes"
-	"fmt"
-	"runtime"
 	"testing"
 
 	"github.com/haproxytech/haproxy-consul-connect/utils"
@@ -23,23 +21,29 @@ func TestHaproxyConfig(t *testing.T) {
 	}
 
 	params, err := utils.MakeHAProxyParams(flags)
+	require.NoError(t, err)
 
 	tmpl, err := template.New("test").Parse(baseCfgTmpl)
+	require.NoError(t, err)
+
 	var capture_stdout bytes.Buffer
 	err = tmpl.Execute(&capture_stdout, baseParams{
 		SocketPath:    "stats_sock.sock",
-		DataplaneUser: "dummy_user",
-		DataplanePass: "dummy_pass",
-		HAProxyParams: defaultsHAProxyParams.With(params),
+		HAProxyParams: params,
 	})
 	require.NoError(t, err)
 	expected_conf := `
 global
 	stats socket stats_sock.sock mode 600 level admin expose-fd listeners
-	maxconn 32000
-	nbthread ` + fmt.Sprint(runtime.GOMAXPROCS(0)) + `
+	expose-experimental-directives
+	maxconn 512
+	nbthread 1
 	stats timeout 2m
-	ulimit-n 65536
+	tune.bufsize 8192
+	tune.maxrewrite 1024
+	tune.ssl.cachesize 100
+	tune.ssl.default-dh-param 2048
+	ulimit-n 4096
 	with.dots hey.I.have.dots
 	with.spaces hey I have spaces
 
@@ -49,11 +53,6 @@ defaults
 	multiple key1 value1
 	multiple key2 value2
 	test.with.dots 3
-	compression algo gzip
-	compression type text/css text/html text/javascript application/javascript text/plain text/xml application/json
-
-userlist controller
-	user dummy_user insecure-password dummy_pass
 
 `
 	require.Equal(t, expected_conf, capture_stdout.String())

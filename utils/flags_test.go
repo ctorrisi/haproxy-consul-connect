@@ -18,14 +18,24 @@ func TestMakeHAProxyParams(t *testing.T) {
 	r, err := MakeHAProxyParams(flags)
 	require.NoError(t, err)
 
+	// MakeHAProxyParams now includes defaults, so we expect both defaults and user-provided params
 	require.Equal(t, HAProxyParams{
 		Defaults: map[string][]string{
+			"http-reuse":     {"always"}, // from defaults
 			"test.with.dots": {"3"},
 			"another":        {"abdc", "efgh"},
 		},
 		Globals: map[string][]string{
-			"with.spaces": {"hey I have spaces"},
-			"with.dots":   {"hey.I.have.dots"},
+			"stats":                     {"timeout 2m"}, // from defaults
+			"nbthread":                  {"1"},
+			"ulimit-n":                  {"4096"},
+			"maxconn":                   {"512"},
+			"tune.bufsize":              {"8192"},
+			"tune.maxrewrite":           {"1024"},
+			"tune.ssl.cachesize":        {"100"},
+			"tune.ssl.default-dh-param": {"2048"},
+			"with.spaces":               {"hey I have spaces"},
+			"with.dots":                 {"hey.I.have.dots"},
 		},
 	}, r)
 }

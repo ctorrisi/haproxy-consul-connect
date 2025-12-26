@@ -17,10 +17,7 @@ func (i *StringSliceFlag) Set(value string) error {
 }
 
 func MakeHAProxyParams(flags StringSliceFlag) (HAProxyParams, error) {
-	params := HAProxyParams{
-		Defaults: map[string][]string{},
-		Globals:  map[string][]string{},
-	}
+	params := DefaultHAProxyParams
 
 	for _, flag := range flags {
 		parts := strings.Split(flag, "=")
