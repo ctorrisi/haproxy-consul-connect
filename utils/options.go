@@ -30,7 +30,8 @@ var DefaultHAProxyParams = HAProxyParams{
 		"timeout queue":           {"5s"},  // Max time request can stay in queue
 
 		// Retries - improve resilience against transient failures
-		"retries": {"3"}, // Retry failed connections up to 3 times
+		"retries":  {"3"}, // Default retry count (overridden per backend based on server count)
+		"retry-on": {"all-retryable-errors conn-failure empty-response response-timeout 500 501 502 503 504"},
 
 		// TCP keep-alive - detect dead connections (no memory overhead)
 		"option clitcpka": {""}, // Enable TCP keep-alive on client side

@@ -76,6 +76,14 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 		return newState, err
 	}
 	be.Servers = servers
+
+	// Dynamic retries: n-1 where n = number of servers (minimum 1)
+	retries := int64(len(servers) - 1)
+	if retries < 1 {
+		retries = 1
+	}
+	be.Backend.Retries = &retries
+
 	newState.Backends = append(newState.Backends, be)
 
 	return newState, nil

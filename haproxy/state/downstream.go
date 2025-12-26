@@ -140,6 +140,9 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 		})
 	}
 
+	// Retries for downstream (fixed at 2 since there's only 1 server)
+	be.Backend.Retries = int64p(2)
+
 	state.Backends = append(state.Backends, be)
 
 	return state, nil
