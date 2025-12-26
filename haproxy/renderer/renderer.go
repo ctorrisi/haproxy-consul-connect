@@ -48,7 +48,7 @@ frontend {{.Frontend.Name}}
 	mode {{.Frontend.Mode}}
 	{{- end}}
 	{{- if .Bind.Address}}
-	bind {{.Bind.Address}}:{{derefInt64 .Bind.Port}}{{if .Bind.Ssl}} ssl crt {{.Bind.SslCertificate}}{{if .Bind.SslCafile}} ca-file {{.Bind.SslCafile}}{{end}}{{if .Bind.Verify}} verify {{.Bind.Verify}}{{end}} ktls on{{end}}
+	bind {{.Bind.Address}}:{{derefInt64 .Bind.Port}}{{if .Bind.Ssl}} ssl crt {{.Bind.SslCertificate}}{{if .Bind.SslCafile}} ca-file {{.Bind.SslCafile}}{{end}}{{if .Bind.Verify}} verify {{.Bind.Verify}}{{end}}{{if eq .Frontend.Mode "http"}} alpn h2,http/1.1{{end}} ktls on{{end}}
 	{{- end}}
 	{{- if .Frontend.DefaultBackend}}
 	default_backend {{.Frontend.DefaultBackend}}

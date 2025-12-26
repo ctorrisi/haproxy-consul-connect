@@ -6,6 +6,8 @@ type HAProxyParams struct {
 }
 
 // DefaultHAProxyParams provides optimized defaults for HAProxy in service mesh sidecars
+// Defaults to TCP mode - allows services to negotiate application protocol (HTTP/gRPC/etc)
+// Use protocol: "http" in Consul config for explicit HTTP features
 var DefaultHAProxyParams = HAProxyParams{
 	Globals: map[string][]string{
 		"stats":                     {"timeout 2m"},
@@ -31,7 +33,7 @@ var DefaultHAProxyParams = HAProxyParams{
 
 		// Retries - improve resilience against transient failures
 		"retries":  {"3"}, // Default retry count (overridden per backend based on server count)
-		"retry-on": {"all-retryable-errors conn-failure empty-response response-timeout 500 501 502 503 504"},
+		"retry-on": {"all-retryable-errors conn-failure empty-response response-timeout"},
 
 		// TCP keep-alive - detect dead connections (no memory overhead)
 		"option clitcpka": {""}, // Enable TCP keep-alive on client side

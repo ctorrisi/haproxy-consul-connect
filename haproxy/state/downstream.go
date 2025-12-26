@@ -11,17 +11,17 @@ import (
 func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Downstream, state State) (State, error) {
 	feName := "front_downstream"
 	beName := "back_downstream"
-	feMode := models.FrontendModeHTTP
-	beMode := models.BackendModeHTTP
+	feMode := models.FrontendModeTCP
+	beMode := models.BackendModeTCP
 
 	caPath, crtPath, err := certStore.CertsPath(cfg.TLS)
 	if err != nil {
 		return state, err
 	}
 
-	if cfg.Protocol == "tcp" {
-		feMode = models.FrontendModeTCP
-		beMode = models.BackendModeTCP
+	if cfg.Protocol == "http" {
+		feMode = models.FrontendModeHTTP
+		beMode = models.BackendModeHTTP
 	}
 
 	log.Infof("downstream: configuring frontend to listen on %s:%d, backend target %s:%d",
@@ -34,7 +34,7 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 			DefaultBackend: beName,
 			ClientTimeout:  int64p(int(cfg.ReadTimeout.Milliseconds())),
 			Mode:           feMode,
-			Httplog:        opts.LogRequests,
+			Httplog:        opts.LogRequests && feMode == models.FrontendModeHTTP,
 		},
 		Bind: models.Bind{
 			Name:           fmt.Sprintf("%s_bind", feName),
@@ -45,11 +45,15 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 			SslCafile:      caPath,
 			Verify:         models.BindVerifyNone,
 		},
-		FilterCompression: &FrontendFilter{
+	}
+
+	// HTTP-specific features
+	if feMode == models.FrontendModeHTTP {
+		fe.FilterCompression = &FrontendFilter{
 			Filter: models.Filter{
 				Type: models.FilterTypeCompression,
 			},
-		},
+		}
 	}
 
 	// Logging

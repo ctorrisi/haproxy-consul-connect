@@ -63,7 +63,7 @@ defaults
 	option redispatch 
 	option srvtcpka 
 	retries 3
-	retry-on all-retryable-errors conn-failure empty-response response-timeout 500 501 502 503 504
+	retry-on all-retryable-errors conn-failure empty-response response-timeout
 	test.with.dots 3
 	timeout client 30s
 	timeout connect 100ms
