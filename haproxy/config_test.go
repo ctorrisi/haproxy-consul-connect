@@ -36,8 +36,8 @@ func TestHaproxyConfig(t *testing.T) {
 global
 	stats socket stats_sock.sock mode 600 level admin expose-fd listeners
 	expose-experimental-directives
-	maxconn 512
-	nbthread 1
+	maxconn 1024
+	nbthread 2
 	stats timeout 2m
 	tune.bufsize 16384
 	tune.maxrewrite 1024
@@ -52,7 +52,17 @@ defaults
 	http-reuse always
 	multiple key1 value1
 	multiple key2 value2
+	option clitcpka 
+	option redispatch 
+	option srvtcpka 
+	retries 3
 	test.with.dots 3
+	timeout client 30s
+	timeout connect 5s
+	timeout http-keep-alive 15s
+	timeout http-request 5s
+	timeout queue 5s
+	timeout server 30s
 
 `
 	require.Equal(t, expected_conf, capture_stdout.String())

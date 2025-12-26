@@ -21,15 +21,25 @@ func TestMakeHAProxyParams(t *testing.T) {
 	// MakeHAProxyParams now includes defaults, so we expect both defaults and user-provided params
 	require.Equal(t, HAProxyParams{
 		Defaults: map[string][]string{
-			"http-reuse":     {"always"}, // from defaults
-			"test.with.dots": {"3"},
-			"another":        {"abdc", "efgh"},
+			"http-reuse":              {"always"}, // from defaults
+			"timeout connect":         {"5s"},
+			"timeout client":          {"30s"},
+			"timeout server":          {"30s"},
+			"timeout http-request":    {"5s"},
+			"timeout http-keep-alive": {"15s"},
+			"timeout queue":           {"5s"},
+			"retries":                 {"3"},
+			"option clitcpka":         {""},
+			"option srvtcpka":         {""},
+			"option redispatch":       {""},
+			"test.with.dots":          {"3"},
+			"another":                 {"abdc", "efgh"},
 		},
 		Globals: map[string][]string{
 			"stats":                     {"timeout 2m"}, // from defaults
-			"nbthread":                  {"1"},
+			"nbthread":                  {"2"},
 			"ulimit-n":                  {"4096"},
-			"maxconn":                   {"512"},
+			"maxconn":                   {"1024"},
 			"tune.bufsize":              {"16384"},
 			"tune.maxrewrite":           {"1024"},
 			"tune.ssl.cachesize":        {"500"},
