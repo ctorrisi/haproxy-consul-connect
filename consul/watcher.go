@@ -363,6 +363,21 @@ func (w *Watcher) startUpstreamService(startup bool, up api.Upstream, name strin
 			}
 
 			if startup && first {
+				// Count healthy nodes
+				healthyCount := 0
+				for _, node := range nodes {
+					status := node.Checks.AggregatedStatus()
+					if status == api.HealthPassing || status == api.HealthWarning {
+						healthyCount++
+					}
+				}
+
+				if healthyCount > 0 {
+					w.log.Infof("consul: upstream %s ready with %d healthy node(s)", up.DestinationName, healthyCount)
+				} else {
+					w.log.Warnf("consul: upstream %s has no healthy nodes yet (will retry)", up.DestinationName)
+				}
+
 				w.ready.Done()
 			}
 
@@ -437,6 +452,21 @@ func (w *Watcher) startUpstreamPreparedQuery(startup bool, up api.Upstream, name
 			}
 
 			if startup && first {
+				// Count healthy nodes
+				healthyCount := 0
+				for _, node := range nodesP {
+					status := node.Checks.AggregatedStatus()
+					if status == api.HealthPassing || status == api.HealthWarning {
+						healthyCount++
+					}
+				}
+
+				if healthyCount > 0 {
+					w.log.Infof("consul: prepared_query upstream %s ready with %d healthy node(s)", up.DestinationName, healthyCount)
+				} else {
+					w.log.Warnf("consul: prepared_query upstream %s has no healthy nodes yet (will retry)", up.DestinationName)
+				}
+
 				w.ready.Done()
 			}
 

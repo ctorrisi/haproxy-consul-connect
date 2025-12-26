@@ -95,6 +95,9 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 			ConnectTimeout: int64p(int(cfg.ConnectTimeout.Milliseconds())),
 			Mode:           beMode,
 			Forwardfor:     forwardFor,
+			Balance: &models.Balance{
+				Algorithm: stringp(models.BalanceAlgorithmRoundrobin),
+			},
 		},
 		Servers: []models.Server{
 			{
@@ -102,6 +105,7 @@ func generateDownstream(opts Options, certStore CertificateStore, cfg consul.Dow
 				Address:     cfg.TargetAddress,
 				Port:        int64p(cfg.TargetPort),
 				Maintenance: models.ServerMaintenanceDisabled,
+				Check:       models.ServerCheckEnabled, // Health check downstream app
 			},
 		},
 	}
