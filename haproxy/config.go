@@ -14,12 +14,14 @@ import (
 
 var defaultsHAProxyParams = utils.HAProxyParams{
 	Globals: map[string][]string{
-		"stats":           {"timeout 2m"},
-		"nbthread":        {"1"},
-		"ulimit-n":        {"4096"},
-		"maxconn":         {"1024"},
-		"tune.bufsize":    {"8192"},
-		"tune.maxrewrite": {"1024"},
+		"stats":                    {"timeout 2m"},
+		"nbthread":                 {"1"},
+		"ulimit-n":                 {"4096"},
+		"maxconn":                  {"512"},    // Reduced from 1024 (saves ~8 MB)
+		"tune.bufsize":             {"8192"},
+		"tune.maxrewrite":          {"1024"},
+		"tune.ssl.cachesize":       {"100"},    // Reduced from default 20000 (saves ~19 MB)
+		"tune.ssl.default-dh-param": {"2048"},  // Explicitly set (prevents larger default)
 	},
 	Defaults: map[string][]string{
 		"http-reuse": {"always"},
@@ -29,7 +31,6 @@ var defaultsHAProxyParams = utils.HAProxyParams{
 const baseCfgTmpl = `
 global
 	stats socket {{.SocketPath}} mode 600 level admin expose-fd listeners
-	expose-experimental-directives
 	{{- range $k, $vs := .HAProxyParams.Globals}}
 	{{- range $v := $vs}}
 	{{$k}} {{$v}}
@@ -42,8 +43,6 @@ defaults
 	{{$k}} {{$v}}
 	{{- end }}
 	{{- end }}
-	compression algo gzip
-	compression type text/css text/html text/javascript application/javascript text/plain text/xml application/json
 
 `
 

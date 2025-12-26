@@ -28,7 +28,6 @@ type HAProxyParams struct {
 
 const configTemplate = `global
 	stats socket {{.SocketPath}} mode 600 level admin expose-fd listeners
-	expose-experimental-directives
 	{{- range $k, $vs := .HAProxyParams.Globals}}
 	{{- range $v := $vs}}
 	{{$k}} {{$v}}
@@ -41,8 +40,6 @@ defaults
 	{{$k}} {{$v}}
 	{{- end }}
 	{{- end }}
-	compression algo gzip
-	compression type text/css text/html text/javascript application/javascript text/plain text/xml application/json
 
 {{range .Frontends}}
 frontend {{.Frontend.Name}}
