@@ -39,9 +39,9 @@ global
 	maxconn 512
 	nbthread 1
 	stats timeout 2m
-	tune.bufsize 8192
+	tune.bufsize 16384
 	tune.maxrewrite 1024
-	tune.ssl.cachesize 100
+	tune.ssl.cachesize 500
 	tune.ssl.default-dh-param 2048
 	ulimit-n 4096
 	with.dots hey.I.have.dots

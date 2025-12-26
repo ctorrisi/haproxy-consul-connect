@@ -11,10 +11,10 @@ var DefaultHAProxyParams = HAProxyParams{
 		"stats":                     {"timeout 2m"},
 		"nbthread":                  {"1"}, // Single thread is efficient for most sidecars
 		"ulimit-n":                  {"4096"},
-		"maxconn":                   {"512"}, // Reduced from 1024 (saves ~8 MB)
-		"tune.bufsize":              {"8192"},
+		"maxconn":                   {"512"},   // Adequate for typical sidecar workloads
+		"tune.bufsize":              {"16384"}, // 16 KB - better for service mesh payloads (still 64x smaller than Envoy's 1MB)
 		"tune.maxrewrite":           {"1024"},
-		"tune.ssl.cachesize":        {"100"},  // Reduced from default 20000 (saves ~19 MB)
+		"tune.ssl.cachesize":        {"500"},  // Optimized for repeated connections to mesh peers
 		"tune.ssl.default-dh-param": {"2048"}, // Explicitly set (prevents larger default)
 	},
 	Defaults: map[string][]string{
