@@ -14,11 +14,11 @@ import (
 
 var defaultsHAProxyParams = utils.HAProxyParams{
 	Globals: map[string][]string{
-		"stats":          {"timeout 2m"},
-		"nbthread":       {"1"},
-		"ulimit-n":       {"4096"},
-		"maxconn":        {"1024"},
-		"tune.bufsize":   {"8192"},
+		"stats":           {"timeout 2m"},
+		"nbthread":        {"1"},
+		"ulimit-n":        {"4096"},
+		"maxconn":         {"1024"},
+		"tune.bufsize":    {"8192"},
 		"tune.maxrewrite": {"1024"},
 	},
 	Defaults: map[string][]string{
@@ -29,6 +29,7 @@ var defaultsHAProxyParams = utils.HAProxyParams{
 const baseCfgTmpl = `
 global
 	stats socket {{.SocketPath}} mode 600 level admin expose-fd listeners
+	expose-experimental-directives
 	{{- range $k, $vs := .HAProxyParams.Globals}}
 	{{- range $v := $vs}}
 	{{$k}} {{$v}}

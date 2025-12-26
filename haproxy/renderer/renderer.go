@@ -28,6 +28,7 @@ type HAProxyParams struct {
 
 const configTemplate = `global
 	stats socket {{.SocketPath}} mode 600 level admin expose-fd listeners
+	expose-experimental-directives
 	{{- range $k, $vs := .HAProxyParams.Globals}}
 	{{- range $v := $vs}}
 	{{$k}} {{$v}}
@@ -49,7 +50,7 @@ frontend {{.Frontend.Name}}
 	mode {{.Frontend.Mode}}
 	{{- end}}
 	{{- if .Bind.Address}}
-	bind {{.Bind.Address}}:{{derefInt64 .Bind.Port}}{{if .Bind.Ssl}} ssl crt {{.Bind.SslCertificate}}{{if .Bind.SslCafile}} ca-file {{.Bind.SslCafile}}{{end}}{{if .Bind.Verify}} verify {{.Bind.Verify}}{{end}}{{end}}
+	bind {{.Bind.Address}}:{{derefInt64 .Bind.Port}}{{if .Bind.Ssl}} ssl crt {{.Bind.SslCertificate}}{{if .Bind.SslCafile}} ca-file {{.Bind.SslCafile}}{{end}}{{if .Bind.Verify}} verify {{.Bind.Verify}}{{end}} ktls on{{end}}
 	{{- end}}
 	{{- if .Frontend.DefaultBackend}}
 	default_backend {{.Frontend.DefaultBackend}}
@@ -110,7 +111,7 @@ backend {{.Backend.Name}}
 	http-request {{.Type}}{{if .HdrName}} {{.HdrName}}{{end}}{{if .HdrFormat}} {{.HdrFormat}}{{end}}
 	{{- end}}
 	{{- range .Servers}}
-	server {{.Name}} {{.Address}}:{{derefInt64 .Port}}{{if .Ssl}} ssl crt {{.SslCertificate}}{{if .SslCafile}} ca-file {{.SslCafile}}{{end}}{{if .Verify}} verify {{.Verify}}{{end}}{{if .NoVerifyhost}} no-verifyhost{{end}}{{end}}{{if .Weight}} weight {{derefInt64 .Weight}}{{end}}{{if eq .Maintenance "enabled"}} disabled{{end}}{{if eq .Check "enabled"}} check{{end}}
+	server {{.Name}} {{.Address}}:{{derefInt64 .Port}}{{if .Ssl}} ssl crt {{.SslCertificate}}{{if .SslCafile}} ca-file {{.SslCafile}}{{end}}{{if .Verify}} verify {{.Verify}}{{end}}{{if .NoVerifyhost}} no-verifyhost{{end}} ktls on{{end}}{{if .Weight}} weight {{derefInt64 .Weight}}{{end}}{{if eq .Maintenance "enabled"}} disabled{{end}}{{if eq .Check "enabled"}} check{{end}}
 	{{- end}}
 {{end}}
 `

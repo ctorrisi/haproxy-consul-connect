@@ -44,7 +44,7 @@ func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstr
 	}
 	if opts.LogRequests && opts.LogSocket != "" {
 		fe.LogTarget = &models.LogTarget{
-			Address: opts.LogSocket,
+			Address:  opts.LogSocket,
 			Facility: models.LogTargetFacilityLocal0,
 			Format:   models.LogTargetFormatRfc5424,
 		}
