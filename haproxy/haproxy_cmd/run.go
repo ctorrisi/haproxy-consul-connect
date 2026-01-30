@@ -2,18 +2,24 @@ package haproxy_cmd
 
 import (
 	"fmt"
+	"io"
 	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/haproxytech/haproxy-consul-connect/haproxy/halog"
 	"github.com/haproxytech/haproxy-consul-connect/lib"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
 	// DefaultHAProxyBin is the default HAProxy program name
 	DefaultHAProxyBin = "haproxy"
+
+	// haproxyReadyTimeout is the maximum time to wait for HAProxy to be ready
+	haproxyReadyTimeout = 30 * time.Second
 )
 
 type Config struct {
@@ -23,7 +29,16 @@ type Config struct {
 }
 
 func Start(sd *lib.Shutdown, cfg Config) (int, error) {
-	haCmd, err := runCommand(sd, halog.New,
+	// Create a buffered channel to signal when HAProxy is ready
+	// Buffered to allow non-blocking sends from multiple log readers
+	readyCh := make(chan struct{}, 1)
+
+	// Create a logger that signals when HAProxy is ready
+	logger := func(r io.Reader) {
+		halog.NewWithReadySignal(r, readyCh)
+	}
+
+	haCmd, err := runCommand(sd, logger,
 		cfg.HAProxyPath,
 		"-W",
 		"-S", cfg.MasterRuntime,
@@ -36,6 +51,17 @@ func Start(sd *lib.Shutdown, cfg Config) (int, error) {
 
 	if haCmd.Process == nil {
 		return 0, fmt.Errorf("HAProxy failed to start")
+	}
+
+	// Wait for HAProxy to be ready before returning
+	// This prevents sending SIGUSR2 before HAProxy has finished loading
+	select {
+	case <-readyCh:
+		log.Debug("HAProxy is ready to receive configuration updates")
+	case <-time.After(haproxyReadyTimeout):
+		return 0, fmt.Errorf("timeout waiting for HAProxy to be ready (waited %s)", haproxyReadyTimeout)
+	case <-sd.Stop:
+		return 0, fmt.Errorf("shutdown requested while waiting for HAProxy to be ready")
 	}
 
 	return haCmd.Process.Pid, nil

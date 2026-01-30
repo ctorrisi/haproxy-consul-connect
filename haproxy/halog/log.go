@@ -8,11 +8,33 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// New creates a log reader that reads HAProxy output and logs it.
+// It returns immediately and processes logs asynchronously.
 func New(r io.Reader) {
+	NewWithReadySignal(r, nil)
+}
+
+// NewWithReadySignal creates a log reader that reads HAProxy output and logs it.
+// If readyCh is provided (must be buffered with capacity >= 1), a signal will be
+// sent when HAProxy signals it's ready (by printing "Loading success.").
+// This function can be called multiple times with the same channel (e.g., for
+// stdout and stderr) - only the first signal will be sent.
+func NewWithReadySignal(r io.Reader, readyCh chan struct{}) {
 	scan := bufio.NewScanner(r)
 	go func() {
 		for scan.Scan() {
-			haproxyLog(scan.Text())
+			line := scan.Text()
+			haproxyLog(line)
+
+			// Detect HAProxy readiness - it prints "Loading success." when the
+			// first worker has finished loading and it's ready to receive reloads
+			if readyCh != nil && strings.Contains(line, "Loading success") {
+				// Non-blocking send - only the first one will succeed
+				select {
+				case readyCh <- struct{}{}:
+				default:
+				}
+			}
 		}
 	}()
 }
