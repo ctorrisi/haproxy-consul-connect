@@ -11,14 +11,14 @@ import (
 func generateUpstream(opts Options, certStore CertificateStore, cfg consul.Upstream, oldState, newState State) (State, error) {
 	feName := fmt.Sprintf("front_%s", cfg.Name)
 	beName := fmt.Sprintf("back_%s", cfg.Name)
-	feMode := models.FrontendModeHTTP
-	beMode := models.BackendModeHTTP
+	feMode := models.FrontendModeTCP
+	beMode := models.BackendModeTCP
 
 	fePort64 := int64(cfg.LocalBindPort)
 
-	if cfg.Protocol == "tcp" {
-		feMode = models.FrontendModeTCP
-		beMode = models.BackendModeTCP
+	if cfg.Protocol == "http" {
+		feMode = models.FrontendModeHTTP
+		beMode = models.BackendModeHTTP
 	}
 
 	log.Infof("upstream %s: configuring frontend to listen on %s:%d", cfg.Name, cfg.LocalBindAddress, cfg.LocalBindPort)

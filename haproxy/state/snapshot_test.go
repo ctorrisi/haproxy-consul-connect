@@ -17,6 +17,7 @@ func GetTestConsulConfig() consul.Config {
 			LocalBindPort:     9999,
 			TargetAddress:     "128.0.0.5",
 			TargetPort:        8888,
+			Protocol:          "http", // Explicitly set HTTP for testing HTTP-specific features
 			AppNameHeaderName: "X-App",
 			ConnectTimeout:    consul.DefaultConnectTimeout,
 			ReadTimeout:       consul.DefaultReadTimeout,
@@ -27,6 +28,7 @@ func GetTestConsulConfig() consul.Config {
 				ServiceName:      "1",
 				LocalBindAddress: "127.0.0.1",
 				LocalBindPort:    10000,
+				Protocol:         "http", // Explicitly set HTTP for testing HTTP-specific features
 				ConnectTimeout:   consul.DefaultConnectTimeout,
 				ReadTimeout:      consul.DefaultReadTimeout,
 				Nodes: []consul.UpstreamNode{
